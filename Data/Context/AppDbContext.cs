@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EntityModels.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Data.Context;
 
@@ -8,4 +9,6 @@ public class AppDbContext : DbContext
     {
             
     }
+
+    public DbSet<User> Users { get; set; }
 }
