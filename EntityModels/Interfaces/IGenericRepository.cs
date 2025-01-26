@@ -24,11 +24,13 @@ public interface IGenericRepository<TEntity> where TEntity : class
 
     TEntity GetByID(object id);
     TEntity Insert(TEntity entity);
+    Task<TEntity> InsertAsync(TEntity entity);
     void InsertRange(IEnumerable<TEntity> entities);
     TEntity Update(TEntity entity);
     void UpdateWithRelatedEntities(TEntity entity);
     object SetObjectStateToDetached(Object obj);
     object SetObjectStateToAdded(object obj);
     bool Exists(Expression<Func<TEntity, bool>> filter = null);
+    Task<bool> ExistsAsync(Expression<Func<TEntity, bool>>? filter = null);
     void DeleteRange(Expression<Func<TEntity, bool>> filter = null);
 }

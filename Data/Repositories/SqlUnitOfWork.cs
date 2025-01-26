@@ -96,4 +96,9 @@ public class SqlUnitOfWork<TContext> : IDisposable, IUnitOfWork<TContext> where 
     {
         _context.SaveChanges();
     }
+
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
 }

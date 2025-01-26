@@ -10,5 +10,6 @@ public interface IDbContext
     EntityEntry Entry(object entity);
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
     int SaveChanges();
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     ChangeTracker ChangeTracker { get; }
 }

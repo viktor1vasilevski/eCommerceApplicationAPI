@@ -7,4 +7,5 @@ namespace Main.Interfaces;
 public interface IAuthService
 {
     Task<ApiResponse<RegisterDTO>> RegisterUserAsync(UserRegisterRequest request);
+    Task<ApiResponse<LoginDTO>> UserLoginAsync(UserLoginRequest request);
 }

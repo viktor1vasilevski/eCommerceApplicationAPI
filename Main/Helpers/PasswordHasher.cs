@@ -2,7 +2,7 @@
 
 namespace Main.Helpers;
 
-public static class PasswordHelper
+public static class PasswordHasher
 {
     public static string HashPassword(string password, byte[] salt)
     {

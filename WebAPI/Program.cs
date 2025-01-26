@@ -41,7 +41,7 @@ using (var scope = app.Services.CreateScope())
         if (!adminExist)
         {
 
-            var saltKey = PasswordHelper.GenerateSalt();
+            var saltKey = PasswordHasher.GenerateSalt();
             var adminUser = new User
             {
                 FirstName = "Admin",
@@ -49,7 +49,7 @@ using (var scope = app.Services.CreateScope())
                 Email = "admin@example.com",
                 Username = "admin",
                 Role = Role.Admin,
-                PasswordHash = PasswordHelper.HashPassword("Admin@123", saltKey),
+                PasswordHash = PasswordHasher.HashPassword("Admin@123", saltKey),
                 SaltKey = Convert.ToBase64String(saltKey),
                 CreatedBy = "Admin",
                 Created = DateTime.Now,

@@ -60,6 +60,12 @@ public class SqlGenericRepository<TEntity, TContext> : IGenericRepository<TEntit
         return query.Any(filter);
     }
 
+    public async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>>? filter = null)
+    {
+        IQueryable<TEntity> query = dbSet;
+        return await query.AnyAsync(filter ?? (_ => true));
+    }
+
     public IEnumerable<TEntity> Get(Expression<Func<TEntity, bool>> filter = null, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null)
     {
         IQueryable<TEntity> query = dbSet;
@@ -130,6 +136,12 @@ public class SqlGenericRepository<TEntity, TContext> : IGenericRepository<TEntit
     public TEntity Insert(TEntity entity)
     {
         dbSet.Add(entity);
+        return entity;
+    }
+
+    public async Task<TEntity> InsertAsync(TEntity entity)
+    {
+        await dbSet.AddAsync(entity);
         return entity;
     }
 
