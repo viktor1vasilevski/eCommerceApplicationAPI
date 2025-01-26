@@ -1,5 +1,7 @@
 ﻿using Data.Repositories;
 using EntityModels.Interfaces;
+using Main.Interfaces;
+using Main.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Main.Extensions;
@@ -10,7 +12,7 @@ public static class ServiceCollectionExtension
     {
         services.AddScoped(typeof(IUnitOfWork<>), typeof(SqlUnitOfWork<>));
 
-        //services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }
