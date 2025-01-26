@@ -3,6 +3,7 @@ using EntityModels.Enums;
 using EntityModels.Models;
 using Main.Helpers;
 using Microsoft.EntityFrameworkCore;
+using Main.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,8 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddIoCService();
 
 var app = builder.Build();
 
