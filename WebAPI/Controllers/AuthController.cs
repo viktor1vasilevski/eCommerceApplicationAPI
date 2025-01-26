@@ -17,19 +17,17 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterAsync(UserRegisterRequest request)
+        public async Task<IActionResult> RegisterAsync([FromBody] UserRegisterRequest request)
         {
             var response = await _authService.RegisterUserAsync(request);
             return HandleResponse(response);
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> LoginAsync(UserLoginRequest request)
+        public async Task<IActionResult> LoginAsync([FromBody] UserLoginRequest request)
         {
-            //var response = await _authService.RegisterUserAsync(request);
-            //return HandleResponse(response);
-
-            return Ok();
+            var response = await _authService.UserLoginAsync(request);
+            return HandleResponse(response);
         }
     }
 }

@@ -12,6 +12,11 @@ public interface IGenericRepository<TEntity> where TEntity : class
         Expression<Func<TEntity, bool>> filter = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null);
+
+    Task<IEnumerable<TEntity>> GetAsync(
+        Expression<Func<TEntity, bool>>? filter = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null);
     IQueryable<TEntity> GetAsQueryable(
         Expression<Func<TEntity, bool>> filter = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,

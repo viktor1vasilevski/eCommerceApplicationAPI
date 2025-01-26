@@ -84,6 +84,24 @@ public class SqlGenericRepository<TEntity, TContext> : IGenericRepository<TEntit
         return query.ToList();
     }
 
+    public async Task<IEnumerable<TEntity>> GetAsync(Expression<Func<TEntity, bool>>? filter = null, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null)
+    {
+        IQueryable<TEntity> query = dbSet;
+        if (filter != null)
+        {
+            query = query.Where(filter);
+        }
+        if (orderBy != null)
+        {
+            query = orderBy(query);
+        }
+        if (include != null)
+        {
+            query = include(query);
+        }
+        return await query.ToListAsync();
+    }
+
     public IQueryable<TEntity> GetAsQueryableWhereIf(
         Func<IQueryable<TEntity>, IQueryable<TEntity>> filter = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,

@@ -24,7 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddIoCService();
-builder.Services.AddValidatorsFromAssemblyContaining<UserRegisterRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UserRegisterRequestValidator>(ServiceLifetime.Transient);
 
 var app = builder.Build();
 

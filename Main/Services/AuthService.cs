@@ -10,7 +10,6 @@ using Main.Helpers;
 using Main.Interfaces;
 using Main.Requests.Auth;
 using Main.Responses;
-using Main.Validations.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -27,13 +26,15 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
 
     private readonly IValidator<UserRegisterRequest> _userRegisterRequestValidator;
-    public AuthService(IUnitOfWork<AppDbContext> uow, IConfiguration configuration, IValidator<UserRegisterRequest> userRegisterRequestValidator)
+    private readonly IValidator<UserLoginRequest> _userLoginRequestValidator;
+    public AuthService(IUnitOfWork<AppDbContext> uow, IConfiguration configuration, IValidator<UserRegisterRequest> userRegisterRequestValidator, IValidator<UserLoginRequest> userLoginRequestValidator)
     {
         _uow = uow;
         _userRepository = _uow.GetGenericRepository<User>();
         _configuration = configuration;
 
         _userRegisterRequestValidator = userRegisterRequestValidator;
+        _userLoginRequestValidator = userLoginRequestValidator;
     }
 
 
@@ -89,9 +90,59 @@ public class AuthService : IAuthService
         }
     }
 
-    public Task<ApiResponse<LoginDTO>> UserLoginAsync(UserLoginRequest request)
+    public async Task<ApiResponse<LoginDTO>> UserLoginAsync(UserLoginRequest request)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var validationResult = ValidationHelper.ValidateRequest<UserLoginRequest, LoginDTO>(request, _userLoginRequestValidator);
+
+            if (validationResult != null)
+                return validationResult;
+
+            var response = await _userRepository.GetAsync(x => x.Username.ToLower() == request.Username.ToLower());
+            var user = response?.FirstOrDefault();
+
+            if (user is null)
+            {
+                return new ApiResponse<LoginDTO>
+                {
+                    Message = AuthConstants.USER_NOT_FOUND,
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest
+                };
+            }
+
+            var isPasswordValid = PasswordHasher.VerifyPassword(request.Password, user.PasswordHash, user.SaltKey);
+
+            if (!isPasswordValid)
+            {
+                return new ApiResponse<LoginDTO>
+                {
+                    Message = AuthConstants.INVALID_PASSWORD,
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest
+                };
+            }
+
+            var token = GenerateJwtToken(user);
+
+            return new ApiResponse<LoginDTO>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Message = AuthConstants.LOGIN_SUCCESS,
+                Data = new LoginDTO { Token = token, Username = user.Username }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<LoginDTO>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = AuthConstants.ERROR_LOGIN
+            };
+        }
     }
 
     private static byte[] GenerateSalt(int size = 16)
@@ -112,8 +163,7 @@ public class AuthService : IAuthService
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+            new Claim(ClaimTypes.Role, user.Role.ToString()),
         };
 
         var token = new JwtSecurityToken(
