@@ -4,6 +4,8 @@ using EntityModels.Models;
 using Main.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Main.Extensions;
+using FluentValidation;
+using Main.Validations.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddIoCService();
+builder.Services.AddValidatorsFromAssemblyContaining<UserRegisterRequestValidator>();
 
 var app = builder.Build();
 

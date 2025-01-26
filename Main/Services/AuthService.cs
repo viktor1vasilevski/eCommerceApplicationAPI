@@ -2,6 +2,7 @@
 using EntityModels.Enums;
 using EntityModels.Interfaces;
 using EntityModels.Models;
+using FluentValidation;
 using Main.Constants;
 using Main.DTOs.Auth;
 using Main.Enums;
@@ -9,6 +10,7 @@ using Main.Helpers;
 using Main.Interfaces;
 using Main.Requests.Auth;
 using Main.Responses;
+using Main.Validations.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -24,11 +26,14 @@ public class AuthService : IAuthService
     private readonly IGenericRepository<User> _userRepository;
     private readonly IConfiguration _configuration;
 
-    public AuthService(IUnitOfWork<AppDbContext> uow, IConfiguration configuration)
+    private readonly IValidator<UserRegisterRequest> _userRegisterRequestValidator;
+    public AuthService(IUnitOfWork<AppDbContext> uow, IConfiguration configuration, IValidator<UserRegisterRequest> userRegisterRequestValidator)
     {
         _uow = uow;
         _userRepository = _uow.GetGenericRepository<User>();
         _configuration = configuration;
+
+        _userRegisterRequestValidator = userRegisterRequestValidator;
     }
 
 
@@ -36,6 +41,11 @@ public class AuthService : IAuthService
     {
         try
         {
+            var validationResult = ValidationHelper.ValidateRequest<UserRegisterRequest, RegisterDTO>(request, _userRegisterRequestValidator);
+
+            if (validationResult != null)
+                return validationResult;
+
             var userExist = await _userRepository.ExistsAsync(x => x.Email.ToLower() == request.Email.ToLower() || x.Username.ToLower() == request.Username.ToLower());
             if (userExist)
                 return new ApiResponse<RegisterDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = AuthConstants.USER_EXISTS };
