@@ -27,7 +27,10 @@ public class AuthService : IAuthService
 
     private readonly IValidator<UserRegisterRequest> _userRegisterRequestValidator;
     private readonly IValidator<UserLoginRequest> _userLoginRequestValidator;
-    public AuthService(IUnitOfWork<AppDbContext> uow, IConfiguration configuration, IValidator<UserRegisterRequest> userRegisterRequestValidator, IValidator<UserLoginRequest> userLoginRequestValidator)
+    public AuthService(IUnitOfWork<AppDbContext> uow, 
+        IConfiguration configuration, 
+        IValidator<UserRegisterRequest> userRegisterRequestValidator, 
+        IValidator<UserLoginRequest> userLoginRequestValidator)
     {
         _uow = uow;
         _userRepository = _uow.GetGenericRepository<User>();
