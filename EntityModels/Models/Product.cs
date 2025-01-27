@@ -16,4 +16,5 @@ public class Product : AuditableBaseEntity
 
 
     public virtual Subcategory? Subcategory { get; set; }
+    public virtual ICollection<Order>? Orders { get; set; }
 }

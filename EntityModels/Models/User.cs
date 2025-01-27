@@ -12,4 +12,7 @@ public class User : AuditableBaseEntity
     public string Email { get; set; }
     public string PasswordHash { get; set; }
     public string SaltKey { get; set; }
+
+
+    public virtual ICollection<Order>? Orders { get; set; }
 }
