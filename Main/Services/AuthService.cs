@@ -134,7 +134,7 @@ public class AuthService : IAuthService
                 Success = true,
                 NotificationType = NotificationType.Success,
                 Message = AuthConstants.LOGIN_SUCCESS,
-                Data = new LoginDTO { Token = token, Username = user.Username }
+                Data = new LoginDTO { Token = token, Username = user.Username, Role = user.Role.ToString() }
             };
         }
         catch (Exception ex)
