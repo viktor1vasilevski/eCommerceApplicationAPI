@@ -8,4 +8,5 @@ public class Subcategory : AuditableBaseEntity
     public Guid CategoryId { get; set; }
 
     public virtual Category? Category { get; set; }
+    public virtual ICollection<Product>? Products { get; set; }
 }
