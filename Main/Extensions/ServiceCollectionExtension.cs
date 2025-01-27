@@ -1,9 +1,7 @@
 ﻿using Data.Repositories;
 using EntityModels.Interfaces;
-using FluentValidation;
 using Main.Interfaces;
 using Main.Services;
-using Main.Validations.Auth;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Main.Extensions;
@@ -14,10 +12,10 @@ public static class ServiceCollectionExtension
     {
         services.AddScoped(typeof(IUnitOfWork<>), typeof(SqlUnitOfWork<>));
 
-        
-
-
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<ISubcategoryService, SubcategoryService>();
+        services.AddScoped<IProductService, ProductService>();
 
         return services;
     }
