@@ -16,4 +16,11 @@
     <ProjectReference Include="..\EntityModels\EntityModels.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\Category\" />
+    <Folder Include="DTOs\Product\" />
+    <Folder Include="DTOs\Subcategory\" />
+    <Folder Include="DTOs\Order\" />
+  </ItemGroup>
+
 </Project>
