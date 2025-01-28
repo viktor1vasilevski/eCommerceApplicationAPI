@@ -77,7 +77,7 @@ public class AuthService : IAuthService
             return new ApiResponse<RegisterDTO>
             {
                 Success = true,
-                Data = new RegisterDTO { Id = user.Id, Username = user.Username },
+                Data = new RegisterDTO { Username = user.Username },
                 NotificationType = NotificationType.Success,
                 Message = AuthConstants.USER_REGISTER_SUCCESS
             };
