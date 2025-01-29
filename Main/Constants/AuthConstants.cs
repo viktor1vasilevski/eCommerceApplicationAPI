@@ -2,7 +2,7 @@
 
 public static class AuthConstants
 {
-    public const string USER_EXISTS = "User already exists.";
+    public const string USER_EXISTS = "A user with the provided details already exists. Please check your information or try a different email or username.";
     public const string USER_NOT_FOUND = "User not found.";
     public const string INVALID_PASSWORD = "Invalid password.";
 
