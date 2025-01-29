@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Main.Extensions;
 using FluentValidation;
 using Main.Validations.Auth;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,8 +26,26 @@ builder.Services.AddCors(policy => policy.AddPolicy("MyPolicy", builder =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+var singingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]));
+var tokenValidationParameters = new TokenValidationParameters()
+{
+    IssuerSigningKey = singingKey,
+    ValidateIssuer = false,
+    ValidateAudience = false,
+    ValidateLifetime = true,
+    ClockSkew = TimeSpan.Zero
+};
+
+builder.Services.AddAuthentication(x => x.DefaultAuthenticateScheme = JwtBearerDefaults
+        .AuthenticationScheme)
+        .AddJwtBearer(jwt =>
+        {
+            jwt.TokenValidationParameters = tokenValidationParameters;
+        });
+
 builder.Services.AddIoCService();
 builder.Services.AddValidatorsFromAssemblyContaining<UserRegisterRequestValidator>(ServiceLifetime.Transient);
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -81,6 +102,8 @@ app.UseHttpsRedirection();
 app.UseCors("MyPolicy");
 
 app.UseAuthorization();
+
+app.UseAuthentication();
 
 app.MapControllers();
 

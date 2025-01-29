@@ -1,10 +1,12 @@
 ﻿using Data.Context;
 using EntityModels.Interfaces;
 using EntityModels.Models;
+using FluentValidation;
 using Main.Constants;
 using Main.DTOs.Category;
 using Main.Enums;
 using Main.Extensions;
+using Main.Helpers;
 using Main.Interfaces;
 using Main.Requests.Category;
 using Main.Responses;
@@ -16,19 +18,20 @@ public class CategoryService : ICategoryService
     private readonly IUnitOfWork<AppDbContext> _uow;
     private readonly IGenericRepository<Category> _categoryRepository;
 
-    public CategoryService(IUnitOfWork<AppDbContext> uow)
+    private readonly IValidator<CreateCategoryRequest> _createCategoryRequestValidator;
+
+    public CategoryService(IUnitOfWork<AppDbContext> uow, IValidator<CreateCategoryRequest> createCategoryRequestValidator)
     {
         _uow = uow;
         _categoryRepository = _uow.GetGenericRepository<Category>();
+
+        _createCategoryRequestValidator = createCategoryRequestValidator;
     }
+
     public ApiResponse<List<CategoryDTO>> GetCategories(CategoryRequest request)
     {
         try
         {
-            // validatior
-
-
-
             var categories = _categoryRepository.GetAsQueryableWhereIf(c => c
                 .WhereIf(!String.IsNullOrEmpty(request.Name), x => x.Name.ToLower().Contains(request.Name.ToLower())),
                 null,
@@ -81,4 +84,43 @@ public class CategoryService : ICategoryService
             };
         }
     }
+    public ApiResponse<CreateCategoryDTO> CreateCategory(CreateCategoryRequest request)
+    {
+        try
+        {
+            var validationResult = ValidationHelper.ValidateRequest<CreateCategoryRequest, CreateCategoryDTO>(request, _createCategoryRequestValidator);
+
+            if (validationResult != null)
+                return validationResult;
+
+            if (_categoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower()))
+                return new ApiResponse<CreateCategoryDTO>()
+                {
+                    Success = false,
+                    Message = CategoryConstants.CATEGORY_EXISTS,
+                    NotificationType = NotificationType.BadRequest
+                };
+
+            _categoryRepository.Insert(new Category { Name = request.Name });
+            _uow.SaveChanges();
+
+            return new ApiResponse<CreateCategoryDTO>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Message = CategoryConstants.CATEGORY_SUCCESSFULLY_CREATED
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<CreateCategoryDTO>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = CategoryConstants.ERROR_CREATING_CATEGORY
+            };
+        }
+    }
+
+
 }

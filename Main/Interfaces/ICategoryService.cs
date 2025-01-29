@@ -7,4 +7,5 @@ namespace Main.Interfaces;
 public interface ICategoryService
 {
     ApiResponse<List<CategoryDTO>> GetCategories(CategoryRequest request);
+    ApiResponse<CreateCategoryDTO> CreateCategory(CreateCategoryRequest request);
 }
