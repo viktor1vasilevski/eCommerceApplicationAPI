@@ -28,9 +28,17 @@ namespace WebAPI.Controllers
 
         [HttpPost("Create")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
-        public IActionResult Insert([FromBody] CreateCategoryRequest request)
+        public IActionResult Create([FromBody] CreateCategoryRequest request)
         {
             var response = _categoryService.CreateCategory(request);
+            return HandleResponse(response);
+        }
+
+        [HttpPut("Edit/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        public IActionResult Edit(Guid id, [FromBody] EditCategoryRequest request)
+        {
+            var response = _categoryService.EditCategory(id, request);
             return HandleResponse(response);
         }
     }

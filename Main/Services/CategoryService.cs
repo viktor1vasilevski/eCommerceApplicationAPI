@@ -19,13 +19,17 @@ public class CategoryService : ICategoryService
     private readonly IGenericRepository<Category> _categoryRepository;
 
     private readonly IValidator<CreateCategoryRequest> _createCategoryRequestValidator;
+    private readonly IValidator<EditCategoryRequest> _editCategoryRequestValidator;
 
-    public CategoryService(IUnitOfWork<AppDbContext> uow, IValidator<CreateCategoryRequest> createCategoryRequestValidator)
+    public CategoryService(IUnitOfWork<AppDbContext> uow, 
+        IValidator<CreateCategoryRequest> createCategoryRequestValidator,
+        IValidator<EditCategoryRequest> editCategoryRequestValidator)
     {
         _uow = uow;
         _categoryRepository = _uow.GetGenericRepository<Category>();
 
         _createCategoryRequestValidator = createCategoryRequestValidator;
+        _editCategoryRequestValidator = editCategoryRequestValidator;
     }
 
     public ApiResponse<List<CategoryDTO>> GetCategories(CategoryRequest request)
@@ -121,6 +125,44 @@ public class CategoryService : ICategoryService
             };
         }
     }
+    public ApiResponse<EditCategoryDTO> EditCategory(Guid id, EditCategoryRequest request)
+    {
+        try
+        {
+            var validationResult = ValidationHelper.ValidateRequest<EditCategoryRequest, EditCategoryDTO>(request, _editCategoryRequestValidator);
 
+            if (validationResult != null)
+                return validationResult;
 
+            var category = _categoryRepository.GetByID(id);
+            if(category is null)
+                return new ApiResponse<EditCategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = CategoryConstants.CATEGORY_DOESNT_EXIST };
+
+            var editedCategoryNameExist = _categoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower() && x.Id != id);
+            if (editedCategoryNameExist)
+                return new ApiResponse<EditCategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = CategoryConstants.CATEGORY_EXISTS };
+
+            category.Name = request.Name;
+
+            _categoryRepository.Update(category);
+            _uow.SaveChanges();
+
+            return new ApiResponse<EditCategoryDTO>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Message = CategoryConstants.CATEGORY_SUCCESSFULLY_UPDATE,
+                Data = new EditCategoryDTO { Id = id, Name = category.Name }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<EditCategoryDTO>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = CategoryConstants.ERROR_EDITING_CATEGORY
+            };
+        }
+    }
 }
