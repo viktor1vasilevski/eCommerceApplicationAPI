@@ -10,6 +10,7 @@ using Main.Helpers;
 using Main.Interfaces;
 using Main.Requests.Category;
 using Main.Responses;
+using Microsoft.EntityFrameworkCore;
 
 namespace Main.Services;
 
@@ -164,5 +165,62 @@ public class CategoryService : ICategoryService
                 Message = CategoryConstants.ERROR_EDITING_CATEGORY
             };
         }
+    }
+    public NonGenericApiResponse DeleteCategory(Guid id)
+    {
+        try
+        {
+            if (id == Guid.Empty)
+                return new NonGenericApiResponse
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = SharedConstants.INVALID_GUID
+                };
+
+            var category = _categoryRepository.GetAsQueryable(x => x.Id == id, null, 
+                x => x.Include(x => x.Subcategories).ThenInclude(x => x.Products)).FirstOrDefault();
+
+            if (category is null)
+                return new NonGenericApiResponse
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = CategoryConstants.CATEGORY_DOESNT_EXIST
+                };
+
+            if (HasRelatedEntities(category))
+                return new NonGenericApiResponse
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = CategoryConstants.CATEGORY_HAS_RELATED_ENTITIES
+                };
+
+
+            _categoryRepository.Delete(category);
+            _uow.SaveChanges();
+
+            return new NonGenericApiResponse
+            {
+                Success = true,
+                Message = CategoryConstants.CATEGORY_SUCCESSFULLY_DELETED,
+                NotificationType = NotificationType.Success,
+            };
+        }
+        catch (Exception ex)
+        {
+            return new NonGenericApiResponse
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = CategoryConstants.ERROR_DELETING_CATEGORY
+            };
+        }
+    }
+    private bool HasRelatedEntities(Category category)
+    {
+        return category.Subcategories?.Any() == true ||
+               category.Subcategories?.FirstOrDefault()?.Products?.Any() == true;
     }
 }

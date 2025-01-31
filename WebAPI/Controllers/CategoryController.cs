@@ -36,10 +36,18 @@ namespace WebAPI.Controllers
 
         [HttpPut("Edit/{id}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
-        public IActionResult Edit(Guid id, [FromBody] EditCategoryRequest request)
+        public IActionResult Edit([FromRoute] Guid id, [FromBody] EditCategoryRequest request)
         {
             var response = _categoryService.EditCategory(id, request);
             return HandleResponse(response);
+        }
+
+        [HttpDelete("Delete/{id}")]
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        public IActionResult Delete([FromRoute] Guid id)
+        {
+            var response = _categoryService.DeleteCategory(id);
+            return Ok(response);
         }
     }
 }
