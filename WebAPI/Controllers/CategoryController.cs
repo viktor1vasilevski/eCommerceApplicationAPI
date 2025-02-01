@@ -26,6 +26,13 @@ namespace WebAPI.Controllers
             return HandleResponse(response);
         }
 
+        [HttpGet("Get/{id}")]
+        public IActionResult GetById([FromRoute] Guid id)
+        {
+            var response = _categoryService.GetCategoryById(id);
+            return HandleResponse(response);
+        }
+
         [HttpPost("Create")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         public IActionResult Create([FromBody] CreateCategoryRequest request)
@@ -43,7 +50,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("Delete/{id}")]
-        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         public IActionResult Delete([FromRoute] Guid id)
         {
             var response = _categoryService.DeleteCategory(id);

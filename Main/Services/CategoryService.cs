@@ -223,4 +223,44 @@ public class CategoryService : ICategoryService
         return category.Subcategories?.Any() == true ||
                category.Subcategories?.FirstOrDefault()?.Products?.Any() == true;
     }
+
+    public ApiResponse<EditCategoryDTO> GetCategoryById(Guid id)
+    {
+        try
+        {
+            if (id == Guid.Empty)
+                return new ApiResponse<EditCategoryDTO>
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = SharedConstants.INVALID_GUID
+                };
+
+            var category = _categoryRepository.GetByID(id);
+
+            if (category == null)
+                return new ApiResponse<EditCategoryDTO>
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = CategoryConstants.CATEGORY_DOESNT_EXIST
+                };
+
+            return new ApiResponse<EditCategoryDTO>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Data = new EditCategoryDTO { Id = category.Id, Name = category.Name }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<EditCategoryDTO>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = CategoryConstants.ERROR_GET_CATEGORY
+            };
+        }
+    }
 }

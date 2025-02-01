@@ -10,4 +10,5 @@ public interface ICategoryService
     ApiResponse<CreateCategoryDTO> CreateCategory(CreateCategoryRequest request);
     ApiResponse<EditCategoryDTO> EditCategory(Guid id, EditCategoryRequest request);
     NonGenericApiResponse DeleteCategory(Guid id);
+    ApiResponse<EditCategoryDTO> GetCategoryById(Guid id);
 }
