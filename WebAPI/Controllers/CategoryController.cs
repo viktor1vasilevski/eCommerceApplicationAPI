@@ -1,9 +1,7 @@
-﻿using Main.Enums;
-using Main.Interfaces;
+﻿using Main.Interfaces;
 using Main.Requests.Category;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
