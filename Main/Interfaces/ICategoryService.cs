@@ -11,4 +11,5 @@ public interface ICategoryService
     ApiResponse<EditCategoryDTO> EditCategory(Guid id, EditCategoryRequest request);
     NonGenericApiResponse DeleteCategory(Guid id);
     ApiResponse<EditCategoryDTO> GetCategoryById(Guid id);
+    ApiResponse<List<SelectCategoryListItemDTO>> GetCategoriesDropdownList();
 }

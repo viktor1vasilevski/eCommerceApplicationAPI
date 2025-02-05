@@ -263,4 +263,33 @@ public class CategoryService : ICategoryService
             };
         }
     }
+
+    public ApiResponse<List<SelectCategoryListItemDTO>> GetCategoriesDropdownList()
+    {
+        try
+        {
+            var categories = _categoryRepository.GetAsQueryable(null, null, null);
+
+            var categoriesDropdownDTO = categories.Select(x => new SelectCategoryListItemDTO
+            {
+                Id = x.Id,
+                Name = x.Name
+            }).ToList();
+
+            return new ApiResponse<List<SelectCategoryListItemDTO>>
+            {
+                Success = true,
+                Data = categoriesDropdownDTO
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<List<SelectCategoryListItemDTO>>
+            {
+                Success = false,
+                Message = CategoryConstants.ERROR_RETRIEVING_CATEGORIES,
+                NotificationType = NotificationType.ServerError
+            };
+        }
+    }
 }

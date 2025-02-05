@@ -52,7 +52,15 @@ namespace WebAPI.Controllers
         public IActionResult Delete([FromRoute] Guid id)
         {
             var response = _categoryService.DeleteCategory(id);
-            return Ok(response);
+            return HandleResponse(response);
+        }
+
+        [HttpGet("GetCategoriesDropdownList")]
+        public IActionResult GetCategoriesDropdownList()
+        {
+            var response = _categoryService.GetCategoriesDropdownList();
+            return HandleResponse(response);
+
         }
     }
 }
