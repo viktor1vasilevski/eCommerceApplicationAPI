@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <Folder Include="DTOs\Product\" />
-    <Folder Include="DTOs\Subcategory\" />
     <Folder Include="DTOs\Order\" />
   </ItemGroup>
 

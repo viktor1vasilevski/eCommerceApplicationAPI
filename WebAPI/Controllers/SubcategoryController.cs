@@ -1,4 +1,5 @@
 ﻿using Main.Interfaces;
+using Main.Requests.Subcategory;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -11,6 +12,13 @@ namespace WebAPI.Controllers
         public SubcategoryController(ISubcategoryService subcategoryService)
         {
             _subcategoryService = subcategoryService;
+        }
+
+        [HttpGet("Get")]
+        public IActionResult Get([FromQuery] SubcategoryRequest request)
+        {
+            var response = _subcategoryService.GetSubcategories(request);
+            return Ok(response);
         }
     }
 }
