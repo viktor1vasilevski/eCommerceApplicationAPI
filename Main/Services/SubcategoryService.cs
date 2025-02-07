@@ -1,11 +1,15 @@
 ﻿using Data.Context;
 using EntityModels.Interfaces;
 using EntityModels.Models;
+using FluentValidation;
 using Main.Constants;
+using Main.DTOs.Category;
 using Main.DTOs.Subcategory;
 using Main.Enums;
 using Main.Extensions;
+using Main.Helpers;
 using Main.Interfaces;
+using Main.Requests.Category;
 using Main.Requests.Subcategory;
 using Main.Responses;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +21,17 @@ public class SubcategoryService : ISubcategoryService
     private IUnitOfWork<AppDbContext> _uow;
     private IGenericRepository<Subcategory> _subcategoryRepository;
     private IGenericRepository<Category> _categoryRepository;
-    public SubcategoryService(IUnitOfWork<AppDbContext> uow)
+
+    private readonly IValidator<CreateSubcategoryRequest> _createSubcategoryRequestValidator;
+    public SubcategoryService(IUnitOfWork<AppDbContext> uow, IValidator<CreateSubcategoryRequest> createSubcategoryRequestValidator)
     {
         _uow = uow;
         _subcategoryRepository = _uow.GetGenericRepository<Subcategory>();
         _categoryRepository = _uow.GetGenericRepository<Category>();
+
+        _createSubcategoryRequestValidator = createSubcategoryRequestValidator;
     }
+
     public ApiResponse<List<SubcategoryDTO>> GetSubcategories(SubcategoryRequest request)
     {
         try
@@ -79,6 +88,59 @@ public class SubcategoryService : ISubcategoryService
                 Success = false,
                 Message = SubcategoryConstants.ERROR_RETRIEVING_SUBCATEGORIES,
                 NotificationType = NotificationType.ServerError,
+            };
+        }
+    }
+
+    public ApiResponse<CreateSubcategoryDTO> CreateSubcategory(CreateSubcategoryRequest request)
+    {
+        try
+        {
+            var validationResult = ValidationHelper.ValidateRequest<CreateSubcategoryRequest, CreateSubcategoryDTO>(request, _createSubcategoryRequestValidator);
+
+            if (validationResult != null)
+                return validationResult;
+
+            if (_subcategoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower()))
+                return new ApiResponse<CreateSubcategoryDTO>()
+                {
+                    Success = false,
+                    Message = SubcategoryConstants.SUBCATEGORY_EXISTS,
+                    NotificationType = NotificationType.BadRequest
+                };
+
+            if(!_categoryRepository.Exists(x => x.Id == request.CategoryId))
+                return new ApiResponse<CreateSubcategoryDTO>()
+                {
+                    Success = false,
+                    Message = CategoryConstants.CATEGORY_DOESNT_EXIST,
+                    NotificationType = NotificationType.BadRequest
+                };
+
+            var entity = new Subcategory()
+            {
+                Name = request.Name,
+                CategoryId = request.CategoryId
+            };
+
+            _subcategoryRepository.Insert(entity);
+            _uow.SaveChanges();
+
+            return new ApiResponse<CreateSubcategoryDTO>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Data = new CreateSubcategoryDTO(),
+                Message = SubcategoryConstants.SUBCATEGORY_SUCCESSFULLY_CREATED
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<CreateSubcategoryDTO>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = SubcategoryConstants.ERROR_CREATING_SUBCATEGORY,
             };
         }
     }

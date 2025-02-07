@@ -7,4 +7,5 @@ namespace Main.Interfaces;
 public interface ISubcategoryService
 {
     ApiResponse<List<SubcategoryDTO>> GetSubcategories(SubcategoryRequest request);
+    ApiResponse<CreateSubcategoryDTO> CreateSubcategory(CreateSubcategoryRequest request);
 }

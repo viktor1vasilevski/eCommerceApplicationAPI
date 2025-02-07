@@ -1,5 +1,7 @@
 ﻿using Main.Interfaces;
 using Main.Requests.Subcategory;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -19,6 +21,14 @@ namespace WebAPI.Controllers
         {
             var response = _subcategoryService.GetSubcategories(request);
             return Ok(response);
+        }
+
+        [HttpPost("Create")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        public IActionResult Create([FromBody] CreateSubcategoryRequest request)
+        {
+            var response = _subcategoryService.CreateSubcategory(request);
+            return HandleResponse(response);
         }
     }
 }
