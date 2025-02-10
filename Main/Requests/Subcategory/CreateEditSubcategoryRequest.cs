@@ -1,6 +1,6 @@
 ﻿namespace Main.Requests.Subcategory;
 
-public class CreateSubcategoryRequest
+public class CreateEditSubcategoryRequest
 {
     public string Name { get; set; }
     public Guid CategoryId { get; set; }

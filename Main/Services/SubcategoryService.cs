@@ -3,13 +3,11 @@ using EntityModels.Interfaces;
 using EntityModels.Models;
 using FluentValidation;
 using Main.Constants;
-using Main.DTOs.Category;
 using Main.DTOs.Subcategory;
 using Main.Enums;
 using Main.Extensions;
 using Main.Helpers;
 using Main.Interfaces;
-using Main.Requests.Category;
 using Main.Requests.Subcategory;
 using Main.Responses;
 using Microsoft.EntityFrameworkCore;
@@ -22,14 +20,14 @@ public class SubcategoryService : ISubcategoryService
     private IGenericRepository<Subcategory> _subcategoryRepository;
     private IGenericRepository<Category> _categoryRepository;
 
-    private readonly IValidator<CreateSubcategoryRequest> _createSubcategoryRequestValidator;
-    public SubcategoryService(IUnitOfWork<AppDbContext> uow, IValidator<CreateSubcategoryRequest> createSubcategoryRequestValidator)
+    private readonly IValidator<CreateEditSubcategoryRequest> _createEditSubcategoryRequestValidator;
+    public SubcategoryService(IUnitOfWork<AppDbContext> uow, IValidator<CreateEditSubcategoryRequest> createEditSubcategoryRequestValidator)
     {
         _uow = uow;
         _subcategoryRepository = _uow.GetGenericRepository<Subcategory>();
         _categoryRepository = _uow.GetGenericRepository<Category>();
 
-        _createSubcategoryRequestValidator = createSubcategoryRequestValidator;
+        _createEditSubcategoryRequestValidator = createEditSubcategoryRequestValidator;
     }
 
     public ApiResponse<List<SubcategoryDTO>> GetSubcategories(SubcategoryRequest request)
@@ -92,11 +90,11 @@ public class SubcategoryService : ISubcategoryService
         }
     }
 
-    public ApiResponse<CreateSubcategoryDTO> CreateSubcategory(CreateSubcategoryRequest request)
+    public ApiResponse<CreateSubcategoryDTO> CreateSubcategory(CreateEditSubcategoryRequest request)
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<CreateSubcategoryRequest, CreateSubcategoryDTO>(request, _createSubcategoryRequestValidator);
+            var validationResult = ValidationHelper.ValidateRequest<CreateEditSubcategoryRequest, CreateSubcategoryDTO>(request, _createEditSubcategoryRequestValidator);
 
             if (validationResult != null)
                 return validationResult;
@@ -141,6 +139,100 @@ public class SubcategoryService : ISubcategoryService
                 Success = false,
                 NotificationType = NotificationType.ServerError,
                 Message = SubcategoryConstants.ERROR_CREATING_SUBCATEGORY,
+            };
+        }
+    }
+
+    public ApiResponse<SubcategoryDetailsDTO> GetSubcategoryById(Guid id)
+    {
+        try
+        {
+            if(id == Guid.Empty)
+                return new ApiResponse<SubcategoryDetailsDTO>() { Success = false, NotificationType = NotificationType.BadRequest, Message = SharedConstants.INVALID_GUID };
+
+            if (_subcategoryRepository.Exists(x => x.Id == id))
+            {
+                var subcategory = _subcategoryRepository.GetAsQueryable(x => x.Id == id, null,
+                    x => x.Include(x => x.Products).Include(x => x.Category)).FirstOrDefault();
+
+                return new ApiResponse<SubcategoryDetailsDTO>
+                {
+                    Success = true,
+                    NotificationType = NotificationType.Success,
+                    Data = new SubcategoryDetailsDTO()
+                    {
+                        Id = subcategory.Id,
+                        Name = subcategory.Name,
+                        CategoryId = subcategory.Category.Id,
+                        CategoryName = subcategory.Category.Name
+                    }
+                };
+            }
+
+            return new ApiResponse<SubcategoryDetailsDTO>
+            {
+                Success = false,
+                NotificationType = NotificationType.BadRequest,
+                Message = SubcategoryConstants.SUBCATEGORY_DOESNT_EXIST,
+            };
+
+
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<SubcategoryDetailsDTO>
+            {
+                Success = false,
+                NotificationType= NotificationType.ServerError,
+                Message = SubcategoryConstants.ERROR_GET_SUBCATEGORY_BY_ID,
+            };
+        }
+    }
+
+    public ApiResponse<SubcategoryDTO> EditSubcategory(Guid id, CreateEditSubcategoryRequest request)
+    {
+        try
+        {
+            var validationResult = ValidationHelper.ValidateRequest<CreateEditSubcategoryRequest, SubcategoryDTO>(request, _createEditSubcategoryRequestValidator);
+
+            if (validationResult != null)
+                return validationResult;
+
+            var subcategory = _subcategoryRepository.GetByID(id);
+            if (subcategory is null)
+                return new ApiResponse<SubcategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = SubcategoryConstants.SUBCATEGORY_DOESNT_EXIST };
+
+            var editedSubcategoryNameExist = _subcategoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower() && x.Id != id);
+            if (editedSubcategoryNameExist)
+                return new ApiResponse<SubcategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = SubcategoryConstants.SUBCATEGORY_EXISTS };
+
+            subcategory.Name = request.Name;
+            subcategory.CategoryId = request.CategoryId;
+
+            _subcategoryRepository.Update(subcategory);
+            _uow.SaveChanges();
+
+            return new ApiResponse<SubcategoryDTO>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Message = SubcategoryConstants.SUBCATEGORY_SUCCESSFULLY_EDITED,
+                Data = new SubcategoryDTO 
+                {
+                    Id = subcategory.Id,
+                    Name = subcategory.Name,
+                    CategoryId = subcategory.CategoryId
+                }
+            };
+
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<SubcategoryDTO>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = SubcategoryConstants.ERROR_EDITING_SUBCATEGORY
             };
         }
     }

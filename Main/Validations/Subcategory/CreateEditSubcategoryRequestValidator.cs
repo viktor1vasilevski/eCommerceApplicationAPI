@@ -3,9 +3,9 @@ using Main.Requests.Subcategory;
 
 namespace Main.Validations.Subcategory;
 
-public class CreateSubcategoryRequestValidator : AbstractValidator<CreateSubcategoryRequest>
+public class CreateEditSubcategoryRequestValidator : AbstractValidator<CreateEditSubcategoryRequest>
 {
-    public CreateSubcategoryRequestValidator()
+    public CreateEditSubcategoryRequestValidator()
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Category Name is required.")
