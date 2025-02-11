@@ -19,18 +19,15 @@ public class CategoryService : ICategoryService
     private readonly IUnitOfWork<AppDbContext> _uow;
     private readonly IGenericRepository<Category> _categoryRepository;
 
-    private readonly IValidator<CreateCategoryRequest> _createCategoryRequestValidator;
-    private readonly IValidator<EditCategoryRequest> _editCategoryRequestValidator;
+    private readonly IValidator<CreateEditCategoryRequest> _createEditCategoryRequestValidator;
 
     public CategoryService(IUnitOfWork<AppDbContext> uow, 
-        IValidator<CreateCategoryRequest> createCategoryRequestValidator,
-        IValidator<EditCategoryRequest> editCategoryRequestValidator)
+        IValidator<CreateEditCategoryRequest> createEditCategoryRequestValidator)
     {
         _uow = uow;
         _categoryRepository = _uow.GetGenericRepository<Category>();
 
-        _createCategoryRequestValidator = createCategoryRequestValidator;
-        _editCategoryRequestValidator = editCategoryRequestValidator;
+        _createEditCategoryRequestValidator = createEditCategoryRequestValidator;
     }
 
     public ApiResponse<List<CategoryDTO>> GetCategories(CategoryRequest request)
@@ -89,11 +86,11 @@ public class CategoryService : ICategoryService
             };
         }
     }
-    public ApiResponse<CreateCategoryDTO> CreateCategory(CreateCategoryRequest request)
+    public ApiResponse<CreateCategoryDTO> CreateCategory(CreateEditCategoryRequest request)
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<CreateCategoryRequest, CreateCategoryDTO>(request, _createCategoryRequestValidator);
+            var validationResult = ValidationHelper.ValidateRequest<CreateEditCategoryRequest, CreateCategoryDTO>(request, _createEditCategoryRequestValidator);
 
             if (validationResult != null)
                 return validationResult;
@@ -126,11 +123,11 @@ public class CategoryService : ICategoryService
             };
         }
     }
-    public ApiResponse<EditCategoryDTO> EditCategory(Guid id, EditCategoryRequest request)
+    public ApiResponse<EditCategoryDTO> EditCategory(Guid id, CreateEditCategoryRequest request)
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<EditCategoryRequest, EditCategoryDTO>(request, _editCategoryRequestValidator);
+            var validationResult = ValidationHelper.ValidateRequest<CreateEditCategoryRequest, EditCategoryDTO>(request, _createEditCategoryRequestValidator);
 
             if (validationResult != null)
                 return validationResult;
@@ -178,7 +175,7 @@ public class CategoryService : ICategoryService
                     Message = SharedConstants.INVALID_GUID
                 };
 
-            var category = _categoryRepository.GetAsQueryable(x => x.Id == id, null, 
+            var category = _categoryRepository.GetAsQueryable(x => x.Id == id && x.Name != "UNCATEGORIZED", null, 
                 x => x.Include(x => x.Subcategories).ThenInclude(x => x.Products)).FirstOrDefault();
 
             if (category is null)
@@ -223,7 +220,6 @@ public class CategoryService : ICategoryService
         return category.Subcategories?.Any() == true ||
                category.Subcategories?.FirstOrDefault()?.Products?.Any() == true;
     }
-
     public ApiResponse<EditCategoryDTO> GetCategoryById(Guid id)
     {
         try
@@ -263,7 +259,6 @@ public class CategoryService : ICategoryService
             };
         }
     }
-
     public ApiResponse<List<SelectCategoryListItemDTO>> GetCategoriesDropdownList()
     {
         try

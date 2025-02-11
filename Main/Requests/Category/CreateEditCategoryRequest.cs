@@ -1,6 +1,6 @@
 ﻿namespace Main.Requests.Category;
 
-public class EditCategoryRequest
+public class CreateEditCategoryRequest
 {
     public string Name { get; set; }
 }

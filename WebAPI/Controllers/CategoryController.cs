@@ -33,7 +33,7 @@ namespace WebAPI.Controllers
 
         [HttpPost("Create")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
-        public IActionResult Create([FromBody] CreateCategoryRequest request)
+        public IActionResult Create([FromBody] CreateEditCategoryRequest request)
         {
             var response = _categoryService.CreateCategory(request);
             return HandleResponse(response);
@@ -41,7 +41,7 @@ namespace WebAPI.Controllers
 
         [HttpPut("Edit/{id}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
-        public IActionResult Edit([FromRoute] Guid id, [FromBody] EditCategoryRequest request)
+        public IActionResult Edit([FromRoute] Guid id, [FromBody] CreateEditCategoryRequest request)
         {
             var response = _categoryService.EditCategory(id, request);
             return HandleResponse(response);

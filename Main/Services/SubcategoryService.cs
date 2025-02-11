@@ -247,7 +247,8 @@ public class SubcategoryService : ISubcategoryService
 
             if (_subcategoryRepository.Exists(x => x.Id == id))
             {
-                var subcategory = _subcategoryRepository.GetAsQueryable(x => x.Id == id).Include(x => x.Category).Include(x => x.Products).FirstOrDefault();
+                var subcategory = _subcategoryRepository.GetAsQueryable(x => x.Id == id && x.Name != "UNCATEGORIZED")
+                    .Include(x => x.Category).Include(x => x.Products).FirstOrDefault();
 
                 if (!subcategory.Products.Any() && !subcategory.Category.Name.Equals("UNCATEGORIZED"))
                 {
