@@ -47,5 +47,13 @@ namespace WebAPI.Controllers
             var response = _subcategoryService.EditSubcategory(id, request);
             return HandleResponse(response);
         }
+
+        [HttpDelete("Delete/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        public IActionResult Delete([FromRoute] Guid id)
+        {
+            var response = _subcategoryService.DeleteSubcategory(id);
+            return HandleResponse(response);
+        }
     }
 }

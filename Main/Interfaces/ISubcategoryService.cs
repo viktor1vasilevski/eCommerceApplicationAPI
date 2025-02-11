@@ -11,4 +11,5 @@ public interface ISubcategoryService
     ApiResponse<CreateSubcategoryDTO> CreateSubcategory(CreateEditSubcategoryRequest request);
     ApiResponse<SubcategoryDetailsDTO> GetSubcategoryById(Guid id);
     ApiResponse<SubcategoryDTO> EditSubcategory(Guid id, CreateEditSubcategoryRequest request);
+    NonGenericApiResponse DeleteSubcategory(Guid id);
 }

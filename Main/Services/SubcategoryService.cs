@@ -3,6 +3,7 @@ using EntityModels.Interfaces;
 using EntityModels.Models;
 using FluentValidation;
 using Main.Constants;
+using Main.DTOs.Category;
 using Main.DTOs.Subcategory;
 using Main.Enums;
 using Main.Extensions;
@@ -233,6 +234,60 @@ public class SubcategoryService : ISubcategoryService
                 Success = false,
                 NotificationType = NotificationType.ServerError,
                 Message = SubcategoryConstants.ERROR_EDITING_SUBCATEGORY
+            };
+        }
+    }
+
+    public NonGenericApiResponse DeleteSubcategory(Guid id)
+    {
+        try
+        {
+            if(id == Guid.Empty)
+                return new NonGenericApiResponse { Success = false, NotificationType = NotificationType.BadRequest, Message = SharedConstants.INVALID_GUID };
+
+            if (_subcategoryRepository.Exists(x => x.Id == id))
+            {
+                var subcategory = _subcategoryRepository.GetAsQueryable(x => x.Id == id).Include(x => x.Category).Include(x => x.Products).FirstOrDefault();
+
+                if (!subcategory.Products.Any() && !subcategory.Category.Name.Equals("UNCATEGORIZED"))
+                {
+                    _subcategoryRepository.Delete(id);
+                    _uow.SaveChanges();
+
+                    return new NonGenericApiResponse()
+                    {
+                        Success = true,
+                        Message = SubcategoryConstants.SUBCATEGORY_SUCCESSFULLY_DELETED,
+                        NotificationType = NotificationType.Success
+                    };
+                } 
+                else
+                {
+                    return new NonGenericApiResponse()
+                    {
+                        Success = false,
+                        Message = SubcategoryConstants.SUBCATEGORY_HAS_RELATED_ENTITIES,
+                        NotificationType = NotificationType.BadRequest
+                    };
+                }
+            }
+            else
+            {
+                return new NonGenericApiResponse()
+                {
+                    Success = false,
+                    Message = SubcategoryConstants.SUBCATEGORY_DOESNT_EXIST,
+                    NotificationType = NotificationType.BadRequest
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            return new NonGenericApiResponse
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = SubcategoryConstants.ERROR_DELETING_SUBCATEGORY
             };
         }
     }
