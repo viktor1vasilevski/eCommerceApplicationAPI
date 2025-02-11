@@ -60,6 +60,36 @@ using (var scope = app.Services.CreateScope())
         // Apply any pending migrations
         dbContext.Database.Migrate();
 
+        var uncatgorizedCategory = dbContext.Categories.Any(x => x.Name == "UNCATEGORIZED");
+        if (!uncatgorizedCategory)
+        {
+            var category = new Category
+            {
+                Name = "UNCATEGORIZED"
+            };
+
+            dbContext.Categories.Add(category);
+            dbContext.SaveChanges();
+        }
+
+
+        var uncatgorizedSubcategory = dbContext.Subcategories.Any(x => x.Name == "UNCATEGORIZED");
+        if (!uncatgorizedSubcategory)
+        {
+            var category = dbContext.Categories.Where(x => x.Name == "UNCATEGORIZED").First();
+
+            var subcategory = new Subcategory
+            {
+                Name = "UNCATEGORIZED",
+                CategoryId = category.Id,
+            };
+
+            dbContext.Subcategories.Add(subcategory);
+            dbContext.SaveChanges();
+        }
+
+
+
         var adminExist = dbContext.Users.Any(x => x.Role == Role.Admin);
 
         if (!adminExist)
