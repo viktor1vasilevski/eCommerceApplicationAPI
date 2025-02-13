@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Main.Requests.Product;
+using System.Text.RegularExpressions;
 
 namespace Main.Validations.Product;
 
@@ -38,12 +39,21 @@ public class CreateEditProductRequestValidator : AbstractValidator<CreateEditPro
             .MaximumLength(100).WithMessage("Edition name cannot exceed 100 characters.");
 
         RuleFor(x => x.Image)
-            .Must(image => Uri.IsWellFormedUriString(image, UriKind.Absolute))
-            .WithMessage("Invalid image URL.")
+            .NotEmpty().WithMessage("Image is required.")
+            .Must(BeValidBase64).WithMessage("Invalid image format.")
             .When(x => !string.IsNullOrEmpty(x.Image));
 
         RuleFor(x => x.SubcategoryId)
             .NotEmpty().WithMessage("Subcategory ID is required.")
             .Must(id => id != Guid.Empty).WithMessage("Subcategory Id must not be an empty GUID."); ;
+    }
+
+
+    private bool BeValidBase64(string? image)
+    {
+        if (string.IsNullOrEmpty(image)) return false;
+
+        var base64Pattern = @"^data:image\/(png|jpg|jpeg|gif);base64,([A-Za-z0-9+/]+={0,2})$";
+        return Regex.IsMatch(image, base64Pattern);
     }
 }
