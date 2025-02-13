@@ -13,8 +13,8 @@ public class Product : AuditableBaseEntity
     public string? Scent { get; set; }
     public string? Edition { get; set; }
     public Guid SubcategoryId { get; set; }
-
-
+    public byte[]? Image { get; set; }
+    public string? ImageType { get; set; }
     public virtual Subcategory? Subcategory { get; set; }
     public virtual ICollection<Order>? Orders { get; set; }
 }
