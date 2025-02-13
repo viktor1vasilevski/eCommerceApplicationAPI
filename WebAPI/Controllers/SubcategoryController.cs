@@ -55,5 +55,13 @@ namespace WebAPI.Controllers
             var response = _subcategoryService.DeleteSubcategory(id);
             return HandleResponse(response);
         }
+
+        [HttpGet("GetSubcategoriesDropdownList")]
+        public IActionResult GetSubcategoriesDropdownList()
+        {
+            var response = _subcategoryService.GetSubcategoriesDropdownList();
+            return HandleResponse(response);
+
+        }
     }
 }

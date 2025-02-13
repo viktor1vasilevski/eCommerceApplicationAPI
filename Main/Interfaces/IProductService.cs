@@ -1,5 +1,10 @@
-﻿namespace Main.Interfaces;
+﻿using Main.DTOs.Product;
+using Main.Requests.Product;
+using Main.Responses;
+
+namespace Main.Interfaces;
 
 public interface IProductService
 {
+    ApiResponse<CreateProductDTO> CreateProduct(CreateEditProductRequest request);
 }

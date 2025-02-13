@@ -292,4 +292,33 @@ public class SubcategoryService : ISubcategoryService
             };
         }
     }
+
+    public ApiResponse<List<SelectSubcategoryListItemDTO>> GetSubcategoriesDropdownList()
+    {
+        try
+        {
+            var subcategories = _subcategoryRepository.GetAsQueryable(null, null, null);
+
+            var subcategoriesDropdownDTO = subcategories.Select(x => new SelectSubcategoryListItemDTO
+            {
+                Id = x.Id,
+                Name = x.Name
+            }).ToList();
+
+            return new ApiResponse<List<SelectSubcategoryListItemDTO>>
+            {
+                Success = true,
+                Data = subcategoriesDropdownDTO
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<List<SelectSubcategoryListItemDTO>>
+            {
+                Success = false,
+                Message = SubcategoryConstants.ERROR_RETRIEVING_SUBCATEGORIES,
+                NotificationType = NotificationType.ServerError
+            };
+        }
+    }
 }
