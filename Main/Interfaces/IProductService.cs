@@ -6,5 +6,6 @@ namespace Main.Interfaces;
 
 public interface IProductService
 {
+    ApiResponse<List<ProductDTO>> GetProducts(ProductRequest request);
     ApiResponse<CreateProductDTO> CreateProduct(CreateEditProductRequest request);
 }

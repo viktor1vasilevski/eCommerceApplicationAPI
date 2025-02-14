@@ -17,6 +17,14 @@ namespace WebAPI.Controllers
             _productService = productService;
         }
 
+
+        [HttpGet("Get")]
+        public IActionResult Get([FromQuery] ProductRequest request)
+        {
+            var response = _productService.GetProducts(request);
+            return HandleResponse(response);
+        }
+
         [HttpPost("Create")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         public IActionResult Create([FromBody] CreateEditProductRequest request)
