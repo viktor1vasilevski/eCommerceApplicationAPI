@@ -40,15 +40,15 @@ public class CategoryService : ICategoryService
                 null
                 );
 
-            if (!string.IsNullOrEmpty(request.Sort))
-            {
-                categories = request.Sort.ToLower() switch
-                {
-                    "asc" => categories.OrderBy(x => x.Created),
-                    "desc" => categories.OrderByDescending(x => x.Created),
-                    _ => categories.OrderByDescending(x => x.Created)
-                };
-            }
+            //if (!string.IsNullOrEmpty(request.Sort))
+            //{
+            //    categories = request.Sort.ToLower() switch
+            //    {
+            //        "asc" => categories.OrderBy(x => x.Created),
+            //        "desc" => categories.OrderByDescending(x => x.Created),
+            //        _ => categories.OrderByDescending(x => x.Created)
+            //    };
+            //}
 
             var totalCount = categories.Count();
 

@@ -42,15 +42,15 @@ public class SubcategoryService : ISubcategoryService
                 x => x.Include(x => x.Category));
 
 
-            if (!string.IsNullOrEmpty(request.Sort))
-            {
-                subcategories = request.Sort.ToLower() switch
-                {
-                    "asc" => subcategories.OrderBy(x => x.Created),
-                    "desc" => subcategories.OrderByDescending(x => x.Created),
-                    _ => subcategories.OrderByDescending(x => x.Created)
-                };
-            }
+            //if (!string.IsNullOrEmpty(request.Sort))
+            //{
+            //    subcategories = request.Sort.ToLower() switch
+            //    {
+            //        "asc" => subcategories.OrderBy(x => x.Created),
+            //        "desc" => subcategories.OrderByDescending(x => x.Created),
+            //        _ => subcategories.OrderByDescending(x => x.Created)
+            //    };
+            //}
 
             var totalCount = subcategories.Count();
 
