@@ -11,6 +11,7 @@ using Main.Interfaces;
 using Main.Requests.Category;
 using Main.Responses;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Main.Services;
 
@@ -18,14 +19,16 @@ public class CategoryService : ICategoryService
 {
     private readonly IUnitOfWork<AppDbContext> _uow;
     private readonly IGenericRepository<Category> _categoryRepository;
+    private readonly ILogger<CategoryService> _logger;
 
     private readonly IValidator<CreateEditCategoryRequest> _createEditCategoryRequestValidator;
 
-    public CategoryService(IUnitOfWork<AppDbContext> uow, 
+    public CategoryService(IUnitOfWork<AppDbContext> uow, ILogger<CategoryService> logger,
         IValidator<CreateEditCategoryRequest> createEditCategoryRequestValidator)
     {
         _uow = uow;
         _categoryRepository = _uow.GetGenericRepository<Category>();
+        _logger = logger;
 
         _createEditCategoryRequestValidator = createEditCategoryRequestValidator;
     }
@@ -40,15 +43,27 @@ public class CategoryService : ICategoryService
                 null
                 );
 
-            //if (!string.IsNullOrEmpty(request.Sort))
-            //{
-            //    categories = request.Sort.ToLower() switch
-            //    {
-            //        "asc" => categories.OrderBy(x => x.Created),
-            //        "desc" => categories.OrderByDescending(x => x.Created),
-            //        _ => categories.OrderByDescending(x => x.Created)
-            //    };
-            //}
+            if (!string.IsNullOrEmpty(request.SortBy) && !string.IsNullOrEmpty(request.SortDirection))
+            {
+                if (request.SortDirection.ToLower() == "asc")
+                {
+                    categories = request.SortBy.ToLower() switch
+                    {
+                        "created" => categories.OrderBy(x => x.Created),
+                        "lastmodified" => categories.OrderBy(x => x.LastModified),
+                        _ => categories.OrderBy(x => x.Created)
+                    };
+                }
+                else if (request.SortDirection.ToLower() == "desc")
+                {
+                    categories = request.SortBy.ToLower() switch
+                    {
+                        "created" => categories.OrderByDescending(x => x.Created),
+                        "lastmodified" => categories.OrderByDescending(x => x.LastModified),
+                        _ => categories.OrderByDescending(x => x.Created)
+                    };
+                }
+            }
 
             var totalCount = categories.Count();
 
@@ -63,9 +78,7 @@ public class CategoryService : ICategoryService
                 Id = x.Id,
                 Name = x.Name,
                 Created = x.Created,
-                CreatedBy = x.CreatedBy,
                 LastModified = x.LastModified,
-                LastModifiedBy = x.LastModifiedBy
             }).ToList();
 
             return new ApiResponse<List<CategoryDTO>>()
@@ -78,6 +91,9 @@ public class CategoryService : ICategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while retrieving categories at {Timestamp}. Name: {Name}",
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), request.Name);
+
             return new ApiResponse<List<CategoryDTO>>
             {
                 Success = false,
