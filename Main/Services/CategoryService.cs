@@ -1,12 +1,10 @@
 ﻿using Data.Context;
 using EntityModels.Interfaces;
 using EntityModels.Models;
-using FluentValidation;
 using Main.Constants;
 using Main.DTOs.Category;
 using Main.Enums;
 using Main.Extensions;
-using Main.Helpers;
 using Main.Interfaces;
 using Main.Requests.Category;
 using Main.Responses;
@@ -15,23 +13,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Main.Services;
 
-public class CategoryService : ICategoryService
+public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryService> _logger) : ICategoryService
 {
-    private readonly IUnitOfWork<AppDbContext> _uow;
-    private readonly IGenericRepository<Category> _categoryRepository;
-    private readonly ILogger<CategoryService> _logger;
-
-    private readonly IValidator<CreateEditCategoryRequest> _createEditCategoryRequestValidator;
-
-    public CategoryService(IUnitOfWork<AppDbContext> uow, ILogger<CategoryService> logger,
-        IValidator<CreateEditCategoryRequest> createEditCategoryRequestValidator)
-    {
-        _uow = uow;
-        _categoryRepository = _uow.GetGenericRepository<Category>();
-        _logger = logger;
-
-        _createEditCategoryRequestValidator = createEditCategoryRequestValidator;
-    }
+    private readonly IGenericRepository<Category> _categoryRepository = _uow.GetGenericRepository<Category>();
 
     public ApiResponse<List<CategoryDTO>> GetCategories(CategoryRequest request)
     {
@@ -106,11 +90,6 @@ public class CategoryService : ICategoryService
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<CreateEditCategoryRequest, CreateCategoryDTO>(request, _createEditCategoryRequestValidator);
-
-            if (validationResult != null)
-                return validationResult;
-
             if (_categoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower()))
                 return new ApiResponse<CreateCategoryDTO>()
                 {
@@ -131,6 +110,9 @@ public class CategoryService : ICategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while creating category at {Timestamp}. Name: {Name}",
+                    DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), request.Name);
+
             return new ApiResponse<CreateCategoryDTO>
             {
                 Success = false,
@@ -143,11 +125,6 @@ public class CategoryService : ICategoryService
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<CreateEditCategoryRequest, EditCategoryDTO>(request, _createEditCategoryRequestValidator);
-
-            if (validationResult != null)
-                return validationResult;
-
             var category = _categoryRepository.GetByID(id);
             if(category is null)
                 return new ApiResponse<EditCategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = CategoryConstants.CATEGORY_DOESNT_EXIST };
@@ -171,6 +148,9 @@ public class CategoryService : ICategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while editing category at {Timestamp}. Name: {Name}",
+                    DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), request.Name);
+
             return new ApiResponse<EditCategoryDTO>
             {
                 Success = false,
@@ -223,6 +203,9 @@ public class CategoryService : ICategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while deleting category at {Timestamp}. CategoryId: {CategoryId}",
+                        DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id);
+
             return new NonGenericApiResponse
             {
                 Success = false,
@@ -231,11 +214,13 @@ public class CategoryService : ICategoryService
             };
         }
     }
+
     private bool HasRelatedEntities(Category category)
     {
         return category.Subcategories?.Any() == true ||
                category.Subcategories?.FirstOrDefault()?.Products?.Any() == true;
     }
+
     public ApiResponse<EditCategoryDTO> GetCategoryById(Guid id)
     {
         try
@@ -267,6 +252,9 @@ public class CategoryService : ICategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while deleting category at {Timestamp}. CategoryId: {CategoryId}",
+                        DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id);
+
             return new ApiResponse<EditCategoryDTO>
             {
                 Success = false,
@@ -275,6 +263,7 @@ public class CategoryService : ICategoryService
             };
         }
     }
+
     public ApiResponse<List<SelectCategoryListItemDTO>> GetCategoriesDropdownList()
     {
         try
@@ -295,6 +284,9 @@ public class CategoryService : ICategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while getting categories for dropdown list at {Timestamp}",
+                    DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
             return new ApiResponse<List<SelectCategoryListItemDTO>>
             {
                 Success = false,
