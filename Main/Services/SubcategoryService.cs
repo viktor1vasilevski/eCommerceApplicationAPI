@@ -1,35 +1,22 @@
 ﻿using Data.Context;
 using EntityModels.Interfaces;
 using EntityModels.Models;
-using FluentValidation;
 using Main.Constants;
-using Main.DTOs.Category;
 using Main.DTOs.Subcategory;
 using Main.Enums;
 using Main.Extensions;
-using Main.Helpers;
 using Main.Interfaces;
 using Main.Requests.Subcategory;
 using Main.Responses;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Main.Services;
 
-public class SubcategoryService : ISubcategoryService
+public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryService> _logger) : ISubcategoryService
 {
-    private IUnitOfWork<AppDbContext> _uow;
-    private IGenericRepository<Subcategory> _subcategoryRepository;
-    private IGenericRepository<Category> _categoryRepository;
-
-    private readonly IValidator<CreateEditSubcategoryRequest> _createEditSubcategoryRequestValidator;
-    public SubcategoryService(IUnitOfWork<AppDbContext> uow, IValidator<CreateEditSubcategoryRequest> createEditSubcategoryRequestValidator)
-    {
-        _uow = uow;
-        _subcategoryRepository = _uow.GetGenericRepository<Subcategory>();
-        _categoryRepository = _uow.GetGenericRepository<Category>();
-
-        _createEditSubcategoryRequestValidator = createEditSubcategoryRequestValidator;
-    }
+    private readonly IGenericRepository<Category> _categoryRepository = _uow.GetGenericRepository<Category>();
+    private readonly IGenericRepository<Subcategory> _subcategoryRepository = _uow.GetGenericRepository<Subcategory>();
 
     public ApiResponse<List<SubcategoryDTO>> GetSubcategories(SubcategoryRequest request)
     {
@@ -41,16 +28,27 @@ public class SubcategoryService : ISubcategoryService
                 null,
                 x => x.Include(x => x.Category));
 
-
-            //if (!string.IsNullOrEmpty(request.Sort))
-            //{
-            //    subcategories = request.Sort.ToLower() switch
-            //    {
-            //        "asc" => subcategories.OrderBy(x => x.Created),
-            //        "desc" => subcategories.OrderByDescending(x => x.Created),
-            //        _ => subcategories.OrderByDescending(x => x.Created)
-            //    };
-            //}
+            if (!string.IsNullOrEmpty(request.SortBy) && !string.IsNullOrEmpty(request.SortDirection))
+            {
+                if (request.SortDirection.ToLower() == "asc")
+                {
+                    subcategories = request.SortBy.ToLower() switch
+                    {
+                        "created" => subcategories.OrderBy(x => x.Created),
+                        "lastmodified" => subcategories.OrderBy(x => x.LastModified),
+                        _ => subcategories.OrderBy(x => x.Created)
+                    };
+                }
+                else if (request.SortDirection.ToLower() == "desc")
+                {
+                    subcategories = request.SortBy.ToLower() switch
+                    {
+                        "created" => subcategories.OrderByDescending(x => x.Created),
+                        "lastmodified" => subcategories.OrderByDescending(x => x.LastModified),
+                        _ => subcategories.OrderByDescending(x => x.Created)
+                    };
+                }
+            }
 
             var totalCount = subcategories.Count();
 
@@ -82,6 +80,9 @@ public class SubcategoryService : ISubcategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while retrieving subcategories at {Timestamp}. Name: {Name}, CategoryId: {CategoryId}",
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), request.Name, request.CategoryId);
+
             return new ApiResponse<List<SubcategoryDTO>>()
             {
                 Success = false,
@@ -95,11 +96,6 @@ public class SubcategoryService : ISubcategoryService
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<CreateEditSubcategoryRequest, CreateSubcategoryDTO>(request, _createEditSubcategoryRequestValidator);
-
-            if (validationResult != null)
-                return validationResult;
-
             if (_subcategoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower()))
                 return new ApiResponse<CreateSubcategoryDTO>()
                 {
@@ -135,6 +131,9 @@ public class SubcategoryService : ISubcategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while creating subcategories at {Timestamp}. Name: {Name}, CategoryId: {CategoryId}",
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), request.Name, request.CategoryId);
+
             return new ApiResponse<CreateSubcategoryDTO>
             {
                 Success = false,
@@ -181,6 +180,9 @@ public class SubcategoryService : ISubcategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while getting subcategory at {Timestamp}. CategoryId: {CategoryId}",
+            DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id);
+
             return new ApiResponse<SubcategoryDetailsDTO>
             {
                 Success = false,
@@ -194,11 +196,6 @@ public class SubcategoryService : ISubcategoryService
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<CreateEditSubcategoryRequest, SubcategoryDTO>(request, _createEditSubcategoryRequestValidator);
-
-            if (validationResult != null)
-                return validationResult;
-
             var subcategory = _subcategoryRepository.GetByID(id);
             if (subcategory is null)
                 return new ApiResponse<SubcategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = SubcategoryConstants.SUBCATEGORY_DOESNT_EXIST };
@@ -229,6 +226,9 @@ public class SubcategoryService : ISubcategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while editing subcategory at {Timestamp}. SubcategoryId: {SubcategoryId}, SubcategoryName: {SubcategoryName}, CategoryId: {CategoryId} ",
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id, request.Name, request.CategoryId);
+
             return new ApiResponse<SubcategoryDTO>
             {
                 Success = false,
@@ -284,6 +284,9 @@ public class SubcategoryService : ISubcategoryService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while deleting subcategory at {Timestamp}. SubcategoryId: {SubcategoryId}",
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id);
+
             return new NonGenericApiResponse
             {
                 Success = false,
