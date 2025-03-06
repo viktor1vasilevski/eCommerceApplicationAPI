@@ -2,7 +2,6 @@
 using EntityModels.Enums;
 using EntityModels.Interfaces;
 using EntityModels.Models;
-using FluentValidation;
 using Main.Constants;
 using Main.DTOs.Auth;
 using Main.Enums;
@@ -11,6 +10,7 @@ using Main.Interfaces;
 using Main.Requests.Auth;
 using Main.Responses;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -19,37 +19,14 @@ using System.Text;
 
 namespace Main.Services;
 
-public class AuthService : IAuthService
+public class AuthService(IUnitOfWork<AppDbContext> _uow, IConfiguration _configuration, ILogger<CategoryService> _logger) : IAuthService
 {
-    private readonly IUnitOfWork<AppDbContext> _uow;
-    private readonly IGenericRepository<User> _userRepository;
-    private readonly IConfiguration _configuration;
-
-    private readonly IValidator<UserRegisterRequest> _userRegisterRequestValidator;
-    private readonly IValidator<UserLoginRequest> _userLoginRequestValidator;
-    public AuthService(IUnitOfWork<AppDbContext> uow, 
-        IConfiguration configuration, 
-        IValidator<UserRegisterRequest> userRegisterRequestValidator, 
-        IValidator<UserLoginRequest> userLoginRequestValidator)
-    {
-        _uow = uow;
-        _userRepository = _uow.GetGenericRepository<User>();
-        _configuration = configuration;
-
-        _userRegisterRequestValidator = userRegisterRequestValidator;
-        _userLoginRequestValidator = userLoginRequestValidator;
-    }
-
+    private readonly IGenericRepository<User> _userRepository = _uow.GetGenericRepository<User>();
 
     public async Task<ApiResponse<RegisterDTO>> RegisterUserAsync(UserRegisterRequest request)
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<UserRegisterRequest, RegisterDTO>(request, _userRegisterRequestValidator);
-
-            if (validationResult != null)
-                return validationResult;
-
             var userExist = await _userRepository.ExistsAsync(x => x.Email.ToLower() == request.Email.ToLower() || x.Username.ToLower() == request.Username.ToLower());
             if (userExist)
                 return new ApiResponse<RegisterDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = AuthConstants.USER_EXISTS };
@@ -97,10 +74,6 @@ public class AuthService : IAuthService
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<UserLoginRequest, LoginDTO>(request, _userLoginRequestValidator);
-
-            if (validationResult != null)
-                return validationResult;
 
             var response = await _userRepository.GetAsync(x => x.Username.ToLower() == request.Username.ToLower());
             var user = response?.FirstOrDefault();
