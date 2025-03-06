@@ -1,42 +1,25 @@
 ﻿using Data.Context;
 using EntityModels.Interfaces;
 using EntityModels.Models;
-using FluentValidation;
 using Main.Constants;
 using Main.DTOs.Product;
 using Main.Enums;
 using Main.Extensions;
-using Main.Helpers;
 using Main.Interfaces;
 using Main.Requests.Product;
 using Main.Responses;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Main.Services;
 
-public class ProductService : IProductService
+public class ProductService(IUnitOfWork<AppDbContext> _uow, IImageService _imageService, ILogger<CategoryService> _logger) : IProductService
 {
-    private readonly IUnitOfWork<AppDbContext> _uow;
-    private readonly IGenericRepository<Product> _productRepository;
-    private readonly IImageService _imageService;
-
-    private readonly IValidator<CreateEditProductRequest> _createEditProductRequestValidator;
-    public ProductService(IUnitOfWork<AppDbContext> uow, IImageService imageService, IValidator<CreateEditProductRequest> createEditProductRequestValidator)
-    {
-        _uow = uow;
-        _productRepository = _uow.GetGenericRepository<Product>();
-        _imageService = imageService;
-
-        _createEditProductRequestValidator = createEditProductRequestValidator;
-    }
+    private readonly IGenericRepository<Product> _productRepository = _uow.GetGenericRepository<Product>();
     public ApiResponse<CreateProductDTO> CreateProduct(CreateEditProductRequest request)
     {
         try
         {
-            var validationResult = ValidationHelper.ValidateRequest<CreateEditProductRequest, CreateProductDTO>(request, _createEditProductRequestValidator);
-
-            if (validationResult != null)
-                return validationResult;
 
             string imageType = _imageService.ExtractImageType(request.Image);
             byte[] imageBytes = _imageService.ConvertBase64ToBytes(request.Image);
@@ -73,6 +56,51 @@ public class ProductService : IProductService
                 Success = false,
                 NotificationType = NotificationType.ServerError,
                 Message = ProductConstants.ERROR_CREATING_PRODUCT
+            };
+        }
+    }
+
+    public NonGenericApiResponse DeleteProduct(Guid id)
+    {
+        try
+        {
+            if (id == Guid.Empty)
+                return new NonGenericApiResponse
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = SharedConstants.INVALID_GUID
+                };
+
+            var product = _productRepository.GetByID(id);
+
+            if (product is null)
+                return new NonGenericApiResponse
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = ProductConstants.PRODUCT_DOESNT_EXIST
+                };
+
+            _productRepository.Delete(product);
+            _uow.SaveChanges();
+
+            return new NonGenericApiResponse
+            {
+                Success = true,
+                Message = ProductConstants.PRODUCT_SUCCESSFULLY_DELETED,
+                NotificationType = NotificationType.Success,
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while deleting product at {Timestamp}. ProductId: {ProductId}",
+                    DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id);
+            return new NonGenericApiResponse
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = ProductConstants.ERROR_DELETING_PRODUCT
             };
         }
     }

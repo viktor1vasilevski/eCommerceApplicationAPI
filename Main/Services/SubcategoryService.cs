@@ -250,7 +250,7 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
                 var subcategory = _subcategoryRepository.GetAsQueryable(x => x.Id == id && x.Name != "UNCATEGORIZED")
                     .Include(x => x.Category).Include(x => x.Products).FirstOrDefault();
 
-                if (!subcategory.Products.Any() && !subcategory.Category.Name.Equals("UNCATEGORIZED"))
+                if (!subcategory.Products.Any() && !subcategory.Name.Equals("UNCATEGORIZED"))
                 {
                     _subcategoryRepository.Delete(id);
                     _uow.SaveChanges();

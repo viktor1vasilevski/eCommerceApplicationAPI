@@ -14,5 +14,5 @@ public static class SubcategoryConstants
 
     public const string SUBCATEGORY_EXISTS = "Subcategory with that name already exists.";
     public const string SUBCATEGORY_DOESNT_EXIST = "Subcategory doesn't exist.";
-    public const string SUBCATEGORY_HAS_RELATED_ENTITIES = "Subcategory cannot be deleted because it has related categories or products.";
+    public const string SUBCATEGORY_HAS_RELATED_ENTITIES = "Subcategory cannot be deleted because it has related products.";
 }

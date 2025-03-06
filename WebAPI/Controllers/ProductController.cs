@@ -1,5 +1,6 @@
 ﻿using Main.Interfaces;
 using Main.Requests.Product;
+using Main.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +31,14 @@ namespace WebAPI.Controllers
         public IActionResult Create([FromBody] CreateEditProductRequest request)
         {
             var response = _productService.CreateProduct(request);
+            return HandleResponse(response);
+        }
+
+        [HttpDelete("Delete/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        public IActionResult Delete([FromRoute] Guid id)
+        {
+            var response = _productService.DeleteProduct(id);
             return HandleResponse(response);
         }
     }
