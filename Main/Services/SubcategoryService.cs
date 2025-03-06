@@ -300,13 +300,24 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
     {
         try
         {
-            var subcategories = _subcategoryRepository.GetAsQueryable(null, null, null);
+            var uncategorizedCategoryId = _categoryRepository
+                .Get(x => x.Name == "UNCATEGORIZED")
+                .Select(x => x.Id)
+                .FirstOrDefault();
 
-            var subcategoriesDropdownDTO = subcategories.Select(x => new SelectSubcategoryListItemDTO
-            {
-                Id = x.Id,
-                Name = x.Name
-            }).ToList();
+            var uncategorizedSubcategoryId = _subcategoryRepository
+                .Get(x => x.Name == "UNCATEGORIZED" && x.CategoryId == uncategorizedCategoryId)
+                .Select(x => x.Id)
+                .FirstOrDefault();
+
+            var subcategoriesDropdownDTO = _subcategoryRepository
+                .Get(x => x.CategoryId != uncategorizedCategoryId || x.Id == uncategorizedSubcategoryId)
+                .Select(x => new SelectSubcategoryListItemDTO
+                {
+                    Id = x.Id,
+                    Name = x.Name
+                })
+                .ToList();
 
             return new ApiResponse<List<SelectSubcategoryListItemDTO>>
             {
@@ -324,4 +335,8 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
             };
         }
     }
+
+
+
+
 }
