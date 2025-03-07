@@ -1,4 +1,5 @@
-﻿using Data.Context;
+﻿using Azure;
+using Data.Context;
 using EntityModels.Interfaces;
 using EntityModels.Models;
 using Main.Constants;
@@ -22,10 +23,7 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
         try
         {
             var categories = _categoryRepository.GetAsQueryableWhereIf(c => c
-                .WhereIf(!String.IsNullOrEmpty(request.Name), x => x.Name.ToLower().Contains(request.Name.ToLower())),
-                null,
-                null
-                );
+                .WhereIf(!String.IsNullOrEmpty(request.Name), x => x.Name.ToLower().Contains(request.Name.ToLower())), null, null);
 
             if (!string.IsNullOrEmpty(request.SortBy) && !string.IsNullOrEmpty(request.SortDirection))
             {
@@ -86,6 +84,7 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
             };
         }
     }
+
     public ApiResponse<CreateCategoryDTO> CreateCategory(CreateEditCategoryRequest request)
     {
         try
@@ -121,6 +120,7 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
             };
         }
     }
+
     public ApiResponse<EditCategoryDTO> EditCategory(Guid id, CreateEditCategoryRequest request)
     {
         try
@@ -159,12 +159,13 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
             };
         }
     }
-    public NonGenericApiResponse DeleteCategory(Guid id)
+
+    public ApiResponse<DeleteCategoryDTO> DeleteCategory(Guid id)
     {
         try
         {
             if (id == Guid.Empty)
-                return new NonGenericApiResponse
+                return new ApiResponse<DeleteCategoryDTO>
                 {
                     Success = false,
                     NotificationType = NotificationType.BadRequest,
@@ -175,7 +176,7 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
                 x => x.Include(x => x.Subcategories).ThenInclude(x => x.Products)).FirstOrDefault();
 
             if (category is null)
-                return new NonGenericApiResponse
+                return new ApiResponse<DeleteCategoryDTO>
                 {
                     Success = false,
                     NotificationType = NotificationType.BadRequest,
@@ -183,7 +184,7 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
                 };
 
             if (HasRelatedEntities(category))
-                return new NonGenericApiResponse
+                return new ApiResponse<DeleteCategoryDTO>
                 {
                     Success = false,
                     NotificationType = NotificationType.BadRequest,
@@ -194,7 +195,7 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
             _categoryRepository.Delete(category);
             _uow.SaveChanges();
 
-            return new NonGenericApiResponse
+            return new ApiResponse<DeleteCategoryDTO>
             {
                 Success = true,
                 Message = CategoryConstants.CATEGORY_SUCCESSFULLY_DELETED,
@@ -206,7 +207,7 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
             _logger.LogError(ex, "An error occurred while deleting category at {Timestamp}. CategoryId: {CategoryId}",
                         DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id);
 
-            return new NonGenericApiResponse
+            return new ApiResponse<DeleteCategoryDTO>
             {
                 Success = false,
                 NotificationType = NotificationType.ServerError,
@@ -215,18 +216,12 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
         }
     }
 
-    private bool HasRelatedEntities(Category category)
-    {
-        return category.Subcategories?.Any() == true ||
-               category.Subcategories?.FirstOrDefault()?.Products?.Any() == true;
-    }
-
-    public ApiResponse<EditCategoryDTO> GetCategoryById(Guid id)
+    public ApiResponse<CategoryDetailsDTO> GetCategoryById(Guid id)
     {
         try
         {
             if (id == Guid.Empty)
-                return new ApiResponse<EditCategoryDTO>
+                return new ApiResponse<CategoryDetailsDTO>
                 {
                     Success = false,
                     NotificationType = NotificationType.BadRequest,
@@ -236,18 +231,18 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
             var category = _categoryRepository.GetByID(id);
 
             if (category == null)
-                return new ApiResponse<EditCategoryDTO>
+                return new ApiResponse<CategoryDetailsDTO>
                 {
                     Success = false,
                     NotificationType = NotificationType.BadRequest,
                     Message = CategoryConstants.CATEGORY_DOESNT_EXIST
                 };
 
-            return new ApiResponse<EditCategoryDTO>
+            return new ApiResponse<CategoryDetailsDTO>
             {
                 Success = true,
                 NotificationType = NotificationType.Success,
-                Data = new EditCategoryDTO { Id = category.Id, Name = category.Name }
+                Data = new CategoryDetailsDTO { Id = category.Id, Name = category.Name }
             };
         }
         catch (Exception ex)
@@ -255,7 +250,7 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
             _logger.LogError(ex, "An error occurred while deleting category at {Timestamp}. CategoryId: {CategoryId}",
                         DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id);
 
-            return new ApiResponse<EditCategoryDTO>
+            return new ApiResponse<CategoryDetailsDTO>
             {
                 Success = false,
                 NotificationType = NotificationType.ServerError,
@@ -294,5 +289,12 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
                 NotificationType = NotificationType.ServerError
             };
         }
+    }
+
+
+    private bool HasRelatedEntities(Category category)
+    {
+        return category.Subcategories?.Any() == true ||
+               category.Subcategories?.FirstOrDefault()?.Products?.Any() == true;
     }
 }

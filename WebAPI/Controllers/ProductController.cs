@@ -1,4 +1,5 @@
 ﻿using Main.Interfaces;
+using Main.Requests.Category;
 using Main.Requests.Product;
 using Main.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -26,11 +27,26 @@ namespace WebAPI.Controllers
             return HandleResponse(response);
         }
 
+        [HttpGet("Get/{id}")]
+        public IActionResult GetById([FromRoute] Guid id)
+        {
+            var response = _productService.GetProductById(id);
+            return HandleResponse(response);
+        }
+
         [HttpPost("Create")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         public IActionResult Create([FromBody] CreateEditProductRequest request)
         {
             var response = _productService.CreateProduct(request);
+            return HandleResponse(response);
+        }
+
+        [HttpPut("Edit/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        public IActionResult Edit([FromRoute] Guid id, [FromBody] CreateEditProductRequest request)
+        {
+            var response = _productService.EditProduct(id, request);
             return HandleResponse(response);
         }
 

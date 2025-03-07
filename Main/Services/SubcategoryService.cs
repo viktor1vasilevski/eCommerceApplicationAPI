@@ -2,6 +2,7 @@
 using EntityModels.Interfaces;
 using EntityModels.Models;
 using Main.Constants;
+using Main.DTOs.Category;
 using Main.DTOs.Subcategory;
 using Main.Enums;
 using Main.Extensions;
@@ -65,9 +66,7 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
                 Category = x.Category.Name,
                 CategoryId = x.Category.Id,
                 Created = x.Created,
-                CreatedBy = x.CreatedBy,
                 LastModified = x.LastModified,
-                LastModifiedBy = x.LastModifiedBy
             }).ToList();
 
             return new ApiResponse<List<SubcategoryDTO>>()
@@ -125,7 +124,6 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
             {
                 Success = true,
                 NotificationType = NotificationType.Success,
-                Data = new CreateSubcategoryDTO(),
                 Message = SubcategoryConstants.SUBCATEGORY_SUCCESSFULLY_CREATED
             };
         }
@@ -139,6 +137,60 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
                 Success = false,
                 NotificationType = NotificationType.ServerError,
                 Message = SubcategoryConstants.ERROR_CREATING_SUBCATEGORY,
+            };
+        }
+    }
+
+    public ApiResponse<SubcategoryDTO> EditSubcategory(Guid id, CreateEditSubcategoryRequest request)
+    {
+        try
+        {
+            if (id == Guid.Empty)
+                return new ApiResponse<SubcategoryDTO>
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = SharedConstants.INVALID_GUID
+                };
+
+            var subcategory = _subcategoryRepository.GetByID(id);
+            if (subcategory is null)
+                return new ApiResponse<SubcategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = SubcategoryConstants.SUBCATEGORY_DOESNT_EXIST };
+
+            var subcategoryNameExist = _subcategoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower() && x.Id != id);
+            if (subcategoryNameExist)
+                return new ApiResponse<SubcategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = SubcategoryConstants.SUBCATEGORY_EXISTS };
+
+            subcategory.Name = request.Name;
+            subcategory.CategoryId = request.CategoryId;
+
+            _subcategoryRepository.Update(subcategory);
+            _uow.SaveChanges();
+
+            return new ApiResponse<SubcategoryDTO>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Message = SubcategoryConstants.SUBCATEGORY_SUCCESSFULLY_EDITED,
+                Data = new SubcategoryDTO
+                {
+                    Id = subcategory.Id,
+                    Name = subcategory.Name,
+                    CategoryId = subcategory.CategoryId
+                }
+            };
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while editing subcategory at {Timestamp}. SubcategoryId: {SubcategoryId}, SubcategoryName: {SubcategoryName}, CategoryId: {CategoryId} ",
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id, request.Name, request.CategoryId);
+
+            return new ApiResponse<SubcategoryDTO>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = SubcategoryConstants.ERROR_EDITING_SUBCATEGORY
             };
         }
     }
@@ -175,65 +227,17 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
                 NotificationType = NotificationType.BadRequest,
                 Message = SubcategoryConstants.SUBCATEGORY_DOESNT_EXIST,
             };
-
-
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while getting subcategory at {Timestamp}. CategoryId: {CategoryId}",
-            DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id);
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id);
 
             return new ApiResponse<SubcategoryDetailsDTO>
             {
                 Success = false,
                 NotificationType= NotificationType.ServerError,
                 Message = SubcategoryConstants.ERROR_GET_SUBCATEGORY_BY_ID,
-            };
-        }
-    }
-
-    public ApiResponse<SubcategoryDTO> EditSubcategory(Guid id, CreateEditSubcategoryRequest request)
-    {
-        try
-        {
-            var subcategory = _subcategoryRepository.GetByID(id);
-            if (subcategory is null)
-                return new ApiResponse<SubcategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = SubcategoryConstants.SUBCATEGORY_DOESNT_EXIST };
-
-            var editedSubcategoryNameExist = _subcategoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower() && x.Id != id);
-            if (editedSubcategoryNameExist)
-                return new ApiResponse<SubcategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = SubcategoryConstants.SUBCATEGORY_EXISTS };
-
-            subcategory.Name = request.Name;
-            subcategory.CategoryId = request.CategoryId;
-
-            _subcategoryRepository.Update(subcategory);
-            _uow.SaveChanges();
-
-            return new ApiResponse<SubcategoryDTO>
-            {
-                Success = true,
-                NotificationType = NotificationType.Success,
-                Message = SubcategoryConstants.SUBCATEGORY_SUCCESSFULLY_EDITED,
-                Data = new SubcategoryDTO 
-                {
-                    Id = subcategory.Id,
-                    Name = subcategory.Name,
-                    CategoryId = subcategory.CategoryId
-                }
-            };
-
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while editing subcategory at {Timestamp}. SubcategoryId: {SubcategoryId}, SubcategoryName: {SubcategoryName}, CategoryId: {CategoryId} ",
-                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), id, request.Name, request.CategoryId);
-
-            return new ApiResponse<SubcategoryDTO>
-            {
-                Success = false,
-                NotificationType = NotificationType.ServerError,
-                Message = SubcategoryConstants.ERROR_EDITING_SUBCATEGORY
             };
         }
     }
@@ -327,6 +331,9 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while getting subcategories for dropdown list at {Timestamp}",
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+
             return new ApiResponse<List<SelectSubcategoryListItemDTO>>
             {
                 Success = false,
@@ -335,8 +342,5 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
             };
         }
     }
-
-
-
 
 }
