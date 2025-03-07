@@ -19,7 +19,10 @@ using System.Text;
 
 namespace Main.Services;
 
-public class AuthService(IUnitOfWork<AppDbContext> _uow, IConfiguration _configuration, ILogger<CategoryService> _logger) : IAuthService
+public class AuthService(
+    IUnitOfWork<AppDbContext> _uow, 
+    IConfiguration _configuration, 
+    ILogger<CategoryService> _logger) : IAuthService
 {
     private readonly IGenericRepository<User> _userRepository = _uow.GetGenericRepository<User>();
 
@@ -44,7 +47,7 @@ public class AuthService(IUnitOfWork<AppDbContext> _uow, IConfiguration _configu
                 PasswordHash = hash,
                 SaltKey = Convert.ToBase64String(saltKey),
                 Role = Role.Customer,
-                CreatedBy = "Admin",
+                CreatedBy = Role.Admin.ToString(),
                 Created = DateTime.Now
             };
 
@@ -61,6 +64,9 @@ public class AuthService(IUnitOfWork<AppDbContext> _uow, IConfiguration _configu
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while registering user at {Timestamp}. FirstName: {FirstName}, LastName: {LastName}, Username: {Username}, Email: {Email}",
+                    DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), request.FirstName, request.LastName, request.Username, request.Email);
+
             return new ApiResponse<RegisterDTO>
             {
                 Success = false,
@@ -74,7 +80,6 @@ public class AuthService(IUnitOfWork<AppDbContext> _uow, IConfiguration _configu
     {
         try
         {
-
             var response = await _userRepository.GetAsync(x => x.Username.ToLower() == request.Username.ToLower());
             var user = response?.FirstOrDefault();
 
@@ -107,11 +112,20 @@ public class AuthService(IUnitOfWork<AppDbContext> _uow, IConfiguration _configu
                 Success = true,
                 NotificationType = NotificationType.Success,
                 Message = AuthConstants.LOGIN_SUCCESS,
-                Data = new LoginDTO { Token = token, Username = user.Username, Role = user.Role.ToString() }
+                Data = new LoginDTO 
+                { 
+                    Token = token, 
+                    Email = user.Email, 
+                    Username = user.Username, 
+                    Role = user.Role.ToString() 
+                }
             };
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while loggin user at {Timestamp}. Username: {Username}",
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), request.Username);
+
             return new ApiResponse<LoginDTO>
             {
                 Success = false,
