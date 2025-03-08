@@ -283,23 +283,6 @@ public class ProductService(IUnitOfWork<AppDbContext> _uow, IImageService _image
                     Message = ProductConstants.PRODUCT_DOESNT_EXIST
                 };
 
-            // Validate image data
-            string? imageBase64 = null;
-            if (product.Image != null && product.Image.Length > 0)
-            {
-                if (string.IsNullOrEmpty(product.ImageType))
-                {
-                    _logger.LogWarning("Product ID {ProductId} has an image but missing ImageType.", product.Id);
-                }
-                else
-                {
-                    imageBase64 = $"data:{product.ImageType};base64,{Convert.ToBase64String(product.Image)}";
-                }
-            }
-
-            _logger.LogInformation("Product ID {ProductId}: Retrieved ImageType={ImageType}, ImageSize={Size} bytes",
-                product.Id, product.ImageType ?? "N/A", product.Image?.Length ?? 0);
-
             return new ApiResponse<ProductDTO>
             {
                 Success = true,
@@ -308,7 +291,7 @@ public class ProductService(IUnitOfWork<AppDbContext> _uow, IImageService _image
                 {
                     Name = product.Name,
                     Brand = product.Brand,
-                    ImageBase64 = imageBase64,
+                    ImageBase64 = $"data:image/{product.ImageType};base64,{Convert.ToBase64String(product.Image)}",
                     Edition = product.Edition,
                     Description = product.Description,
                     Id = product.Id,

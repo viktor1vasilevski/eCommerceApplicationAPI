@@ -22,11 +22,6 @@ public class ImageService : IImageService
         var imageData = base64String.Split(";");
         var imageType = imageData[0].Split("/");
 
-        if (imageType[1] == "jpeg")
-        {
-            return "jpg";
-        }
-
         return imageType[1];
     }
 }
