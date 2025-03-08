@@ -95,7 +95,7 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
     {
         try
         {
-            if (_subcategoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower()))
+            if (_subcategoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower() && x.Id == request.CategoryId))
                 return new ApiResponse<CreateSubcategoryDTO>()
                 {
                     Success = false,
@@ -157,7 +157,7 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
             if (subcategory is null)
                 return new ApiResponse<SubcategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = SubcategoryConstants.SUBCATEGORY_DOESNT_EXIST };
 
-            var subcategoryNameExist = _subcategoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower() && x.Id != id);
+            var subcategoryNameExist = _subcategoryRepository.Exists(x => x.Name.ToLower() == request.Name.ToLower() && x.Id != id && x.CategoryId == request.CategoryId);
             if (subcategoryNameExist)
                 return new ApiResponse<SubcategoryDTO> { Success = false, NotificationType = NotificationType.BadRequest, Message = SubcategoryConstants.SUBCATEGORY_EXISTS };
 
@@ -315,11 +315,11 @@ public class SubcategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<Category
                 .FirstOrDefault();
 
             var subcategoriesDropdownDTO = _subcategoryRepository
-                .Get(x => x.CategoryId != uncategorizedCategoryId || x.Id == uncategorizedSubcategoryId)
+                .Get(x => x.CategoryId != uncategorizedCategoryId || x.Id == uncategorizedSubcategoryId, null, x => x.Include(x => x.Category))
                 .Select(x => new SelectSubcategoryListItemDTO
                 {
                     Id = x.Id,
-                    Name = x.Name
+                    Name = $"{x.Name} ({x.Category.Name})" 
                 })
                 .ToList();
 
