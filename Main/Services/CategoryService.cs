@@ -4,6 +4,7 @@ using EntityModels.Interfaces;
 using EntityModels.Models;
 using Main.Constants;
 using Main.DTOs.Category;
+using Main.DTOs.Subcategory;
 using Main.Enums;
 using Main.Extensions;
 using Main.Interfaces;
@@ -297,4 +298,32 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
         return category.Subcategories?.Any() == true ||
                category.Subcategories?.FirstOrDefault()?.Products?.Any() == true;
     }
+
+    public ApiResponse<List<CategoryWithSubcategoriesDetialsDTO>> GetCategoriesWithSubcategories()
+    {
+        var categories = _categoryRepository.Get(x => x.Name != "UNCATEGORIZED", null,
+            query => query.Include(c => c.Subcategories)
+        ).ToList();
+
+        var categoryDtos = categories.Select(c => new CategoryWithSubcategoriesDetialsDTO
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Subcategories = c.Subcategories.Select(sc => new SubcategoryDetailsDTO
+            {
+                Id = sc.Id,
+                Name = sc.Name,
+                CategoryId = c.Id
+            }).ToList()
+        }).ToList();
+
+        return new ApiResponse<List<CategoryWithSubcategoriesDetialsDTO>>
+        {
+            Success = true,
+            NotificationType = NotificationType.Success,
+            Data = categoryDtos
+        };
+    }
+
+
 }

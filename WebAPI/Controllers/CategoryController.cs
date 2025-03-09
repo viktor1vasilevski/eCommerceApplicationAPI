@@ -62,5 +62,13 @@ namespace WebAPI.Controllers
             return HandleResponse(response);
 
         }
+
+        [HttpGet("GetCategoriesWithSubcategories")]
+        public IActionResult GetCategoriesWithSubcategories()
+        {
+            var response = _categoryService.GetCategoriesWithSubcategories();
+            return HandleResponse(response);
+
+        }
     }
 }
