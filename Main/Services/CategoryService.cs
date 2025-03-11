@@ -302,8 +302,10 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
 
     public ApiResponse<List<CategoryWithSubcategoriesDetialsDTO>> GetCategoriesWithSubcategories()
     {
-        var categories = _categoryRepository.Get(x => x.Name != "UNCATEGORIZED", null,
-            query => query.Include(c => c.Subcategories)
+        var categories = _categoryRepository.Get(
+            x => x.Name != "UNCATEGORIZED" && x.Subcategories.Any(sc => sc.Products.Any()),
+            null,
+            query => query.Include(c => c.Subcategories).ThenInclude(sc => sc.Products)
         ).ToList();
 
         var categoryDtos = categories.Select(c => new CategoryWithSubcategoriesDetialsDTO
@@ -311,13 +313,17 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
             Id = c.Id,
             Name = c.Name,
             Slug = SlugHelper.GenerateHashSlug(c.Id),
-            Subcategories = c.Subcategories.Select(sc => new SubcategorySlugDTO
-            {
-                Id = sc.Id,
-                Name = sc.Name,
-                Slug = SlugHelper.GenerateHashSlug(sc.Id),
-            }).ToList()
-        }).ToList();
+            Subcategories = c.Subcategories
+                .Where(sc => sc.Products.Any())
+                .Select(sc => new SubcategorySlugDTO
+                {
+                    Id = sc.Id,
+                    Name = sc.Name,
+                    Slug = SlugHelper.GenerateHashSlug(sc.Id),
+                }).ToList()
+        })
+        .Where(c => c.Subcategories.Any())
+        .ToList();
 
         return new ApiResponse<List<CategoryWithSubcategoriesDetialsDTO>>
         {
@@ -326,6 +332,7 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
             Data = categoryDtos
         };
     }
+
 
 
 }
