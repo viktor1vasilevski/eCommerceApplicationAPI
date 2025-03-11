@@ -6,5 +6,6 @@ public class CategoryWithSubcategoriesDetialsDTO
 {
     public Guid Id { get; set; }
     public string Name { get; set; }
-    public List<SubcategoryDetailsDTO> Subcategories { get; set; }
+    public string Slug { get; set; }
+    public List<SubcategorySlugDTO> Subcategories { get; set; }
 }

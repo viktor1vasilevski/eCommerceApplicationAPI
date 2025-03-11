@@ -7,6 +7,7 @@ using Main.DTOs.Category;
 using Main.DTOs.Subcategory;
 using Main.Enums;
 using Main.Extensions;
+using Main.Helpers;
 using Main.Interfaces;
 using Main.Requests.Category;
 using Main.Responses;
@@ -309,11 +310,12 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
         {
             Id = c.Id,
             Name = c.Name,
-            Subcategories = c.Subcategories.Select(sc => new SubcategoryDetailsDTO
+            Slug = SlugHelper.GenerateHashSlug(c.Id),
+            Subcategories = c.Subcategories.Select(sc => new SubcategorySlugDTO
             {
                 Id = sc.Id,
                 Name = sc.Name,
-                CategoryId = c.Id
+                Slug = SlugHelper.GenerateHashSlug(sc.Id),
             }).ToList()
         }).ToList();
 
