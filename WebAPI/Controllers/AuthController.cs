@@ -8,13 +8,9 @@ namespace WebAPI.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [AllowAnonymous]
-    public class AuthController : BaseController
+    public class AuthController(IAuthService authService) : BaseController
     {
-        private readonly IAuthService _authService;
-        public AuthController(IAuthService authService)
-        {
-            _authService = authService;
-        }
+        private readonly IAuthService _authService = authService;
 
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] UserRegisterRequest request)

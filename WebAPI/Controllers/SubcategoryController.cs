@@ -10,13 +10,10 @@ namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SubcategoryController : BaseController
+    public class SubcategoryController(ISubcategoryService subcategoryService) : BaseController
     {
-        private readonly ISubcategoryService _subcategoryService;
-        public SubcategoryController(ISubcategoryService subcategoryService)
-        {
-            _subcategoryService = subcategoryService;
-        }
+        private readonly ISubcategoryService _subcategoryService = subcategoryService;
+
 
         [HttpGet("Get")]
         public IActionResult Get([FromQuery] SubcategoryRequest request)

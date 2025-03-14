@@ -5,13 +5,9 @@ namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class OrderController : ControllerBase
+    public class OrderController(IOrderService orderService) : ControllerBase
     {
-        private readonly IOrderService _orderService;
+        private readonly IOrderService _orderService = orderService;
 
-        public OrderController(IOrderService orderService)
-        {
-            _orderService = orderService;
-        }
     }
 }

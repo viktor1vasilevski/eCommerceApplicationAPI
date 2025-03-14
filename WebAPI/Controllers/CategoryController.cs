@@ -8,14 +8,9 @@ namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoryController : BaseController
+    public class CategoryController(ICategoryService categoryService) : BaseController
     {
-        private readonly ICategoryService _categoryService;
-        public CategoryController(ICategoryService categoryService)
-        {
-            _categoryService = categoryService;
-        }
-
+        private readonly ICategoryService _categoryService = categoryService;
 
         [HttpGet("Get")]
         public IActionResult Get([FromQuery] CategoryRequest request)
