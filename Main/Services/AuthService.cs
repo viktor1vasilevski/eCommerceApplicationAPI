@@ -114,6 +114,7 @@ public class AuthService(
                 Message = AuthConstants.LOGIN_SUCCESS,
                 Data = new LoginDTO 
                 { 
+                    Id = user.Id,
                     Token = token, 
                     Email = user.Email, 
                     Username = user.Username, 

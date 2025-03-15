@@ -217,6 +217,7 @@ public class ProductService(IUnitOfWork<AppDbContext> _uow, IImageService _image
             };
         }
     }
+
     public NonGenericApiResponse DeleteProduct(Guid id)
     {
         try
