@@ -1,6 +1,7 @@
 ﻿using Data.Context;
 using EntityModels.Interfaces;
 using EntityModels.Models;
+using Main.Constants;
 using Main.DTOs.UserBasket;
 using Main.Enums;
 using Main.Interfaces;
@@ -16,12 +17,59 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
     private readonly IGenericRepository<UserBasket> _userBasketRepository = _uow.GetGenericRepository<UserBasket>();
     private readonly IGenericRepository<User> _userRepository = _uow.GetGenericRepository<User>();
 
-    public Task<ApiResponse<UserBasketItemsDTO>> GetUserBasket(Guid id)
+    public async Task<ApiResponse<List<BasketItemResponseDTO>>> GetBasketItemsByUserId(Guid userId)
     {
-        throw new NotImplementedException();
+        try
+        {
+            if (userId == Guid.Empty)
+                return new ApiResponse<List<BasketItemResponseDTO>>
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = SharedConstants.INVALID_GUID
+                };
+
+            if(!_userRepository.Exists(x => x.Id == userId))
+                return new ApiResponse<List<BasketItemResponseDTO>>
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = UserBasketConstants.USER_NOT_EXIST,
+                };
+
+            var userBasketItems = await _userBasketRepository.GetAsync(x => x.UserId == userId, null, x => x.Include(x => x.Product));
+
+            return new ApiResponse<List<BasketItemResponseDTO>>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Data = userBasketItems.Select(x => new BasketItemResponseDTO
+                {
+                    ProductId = x.ProductId,
+                    ProductBrand = x.Product.Brand,
+                    ProductName = x.Product.Name,
+                    ProductEdition = x.Product.Edition,
+                    Quantity = x.Quantity,
+                    Price = (decimal)x.Product.UnitPrice,
+                    ImageBase64 = $"data:image/{x.Product.ImageType};base64,{Convert.ToBase64String(x.Product.Image)}"
+                }).ToList()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while getting basket items for user id at {Timestamp}. UserId: {UserId}",
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), userId);
+
+            return new ApiResponse<List<BasketItemResponseDTO>>
+            {
+                Success = true,
+                NotificationType = NotificationType.ServerError,
+                Message = UserBasketConstants.ERROR_GET_USER_BASKET_ITEMS,
+            };
+        }
     }
 
-    public async Task<ApiResponse<List<BasketItemResponseDTO>>> ManageUserBucket(Guid userId, AddToBasketRequest request)
+    public async Task<ApiResponse<List<BasketItemResponseDTO>>> ManageBasketItemsByUserId(Guid userId, AddToBasketRequest request)
     {
         try
         {
