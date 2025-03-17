@@ -10,10 +10,10 @@ namespace WebAPI.Controllers
     {
         private readonly IUserBasketService _userBasketService = userBasketService;
 
-        [HttpPost("ManageBasketItemsByUserId/{userId}")]
-        public async Task<IActionResult> ManageBasketByUserId([FromRoute] Guid userId, [FromBody] AddToBasketRequest request)
+        [HttpPost("ManageBasketItemsByUserId")]
+        public async Task<IActionResult> ManageBasketByUserId([FromBody] AddToBasketRequest request)
         {
-            var response = await _userBasketService.ManageBasketItemsByUserId(userId, request);
+            var response = await _userBasketService.ManageBasketItemsByUserId(request);
             return HandleResponse(response);
         }
 

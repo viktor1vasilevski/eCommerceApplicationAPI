@@ -7,5 +7,5 @@ namespace Main.Interfaces;
 public interface IUserBasketService
 {
     Task<ApiResponse<List<BasketItemResponseDTO>>> GetBasketItemsByUserId(Guid userId);
-    Task<ApiResponse<List<BasketItemResponseDTO>>> ManageBasketItemsByUserId(Guid userId, AddToBasketRequest request);
+    Task<ApiResponse<List<BasketItemResponseDTO>>> ManageBasketItemsByUserId(AddToBasketRequest request);
 }

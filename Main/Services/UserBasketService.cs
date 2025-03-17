@@ -69,17 +69,19 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
         }
     }
 
-    public async Task<ApiResponse<List<BasketItemResponseDTO>>> ManageBasketItemsByUserId(Guid userId, AddToBasketRequest request)
+    public async Task<ApiResponse<List<BasketItemResponseDTO>>> ManageBasketItemsByUserId(AddToBasketRequest request)
     {
         try
         {
+            var userId = request.UserId;
             var userExist = _userRepository.GetByID(userId);
             if (userExist is null)
                 return new ApiResponse<List<BasketItemResponseDTO>>
                 {
-                    Success = false
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = UserBasketConstants.USER_NOT_EXIST
                 };
-
 
             // Retrieve existing user basket from the database
             var existingItems = _userBasketRepository.Get(x => x.UserId == userId, null, null).ToList();
@@ -111,7 +113,7 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
             }
 
             // Save all changes
-            _uow.SaveChanges();
+            await _uow.SaveChangesAsync();
 
             // Retrieve updated basket
             var updatedBasket = _userBasketRepository
@@ -126,8 +128,6 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
                     ImageBase64 = $"data:image/{x.Product.ImageType};base64,{Convert.ToBase64String(x.Product.Image)}",
                 }).ToList();
 
-            //var response = new UserBasketItemsDTO {  Items = updatedBasket };
-
             return new ApiResponse<List<BasketItemResponseDTO>>
             {
                 Success = true,
@@ -137,9 +137,14 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred in {FunctionName} at {Timestamp}. UserId: {UserId}", nameof(ManageBasketItemsByUserId),
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), request.UserId);
+
             return new ApiResponse<List<BasketItemResponseDTO>>
             {
                 Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = UserBasketConstants.ERROR_MANAGE_USER_BASKET_ITEMS
             };
         }
     }
