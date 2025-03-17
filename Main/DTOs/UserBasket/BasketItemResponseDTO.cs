@@ -2,12 +2,12 @@
 
 public class BasketItemResponseDTO
 {
-    public Guid ProductId { get; set; }
+    public Guid Id { get; set; }
     public int Quantity { get; set; }
-    public string ProductName { get; set; } = string.Empty;
-    public string ProductBrand { get; set; } = string.Empty;
-    public string? ProductEdition { get; set; } = string.Empty;
-    public decimal Price { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Brand { get; set; } = string.Empty;
+    public string? Edition { get; set; } = string.Empty;
+    public decimal UnitPrice { get; set; }
     public string ImageBase64 { get; set; } = string.Empty;
 }
 

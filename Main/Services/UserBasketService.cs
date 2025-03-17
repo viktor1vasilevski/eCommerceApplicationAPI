@@ -45,20 +45,20 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
                 NotificationType = NotificationType.Success,
                 Data = userBasketItems.Select(x => new BasketItemResponseDTO
                 {
-                    ProductId = x.ProductId,
-                    ProductBrand = x.Product.Brand,
-                    ProductName = x.Product.Name,
-                    ProductEdition = x.Product.Edition,
+                    Id = x.ProductId,
+                    Brand = x.Product.Brand,
+                    Name = x.Product.Name,
+                    Edition = x.Product.Edition,
                     Quantity = x.Quantity,
-                    Price = (decimal)x.Product.UnitPrice,
+                    UnitPrice = (decimal)x.Product.UnitPrice,
                     ImageBase64 = $"data:image/{x.Product.ImageType};base64,{Convert.ToBase64String(x.Product.Image)}"
                 }).ToList()
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while getting basket items for user id at {Timestamp}. UserId: {UserId}",
-                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), userId);
+            _logger.LogError(ex, "An error occurred in {FunctionName} while getting basket items for user id at {Timestamp}. UserId: {UserId}",
+                nameof(GetBasketItemsByUserId), DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), userId);
 
             return new ApiResponse<List<BasketItemResponseDTO>>
             {
@@ -94,8 +94,8 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
                 if (existingItem != null)
                 {
                     // If the item exists, update its quantity
-                    existingItem.Quantity += newItem.Quantity;
-                    _userBasketRepository.Update(existingItem);
+                    existingItem.Quantity = newItem.Quantity;
+                    await _userBasketRepository.UpdateAsync(existingItem);
                 }
                 else
                 {
@@ -106,6 +106,8 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
                         UserId = userId,
                         ProductId = newItem.ProductId,
                         Quantity = newItem.Quantity,
+                        CreatedBy = userExist.FirstName + " " + userExist.LastName,
+                        Created = DateTime.UtcNow,
                     };
 
                     await _userBasketRepository.InsertAsync(newBasketItem);
@@ -120,11 +122,12 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
                 .Get(x => x.UserId == userId, null, x => x.Include(x => x.Product))
                 .Select(x => new BasketItemResponseDTO
                 {
-                    ProductId = x.ProductId,
+                    Id = x.ProductId,
                     Quantity = x.Quantity,
-                    ProductBrand = x.Product.Name,
-                    ProductEdition = x.Product.Edition,
-                    Price = (decimal)x.Product.UnitPrice,
+                    Brand = x.Product.Brand,
+                    Name = x.Product.Name,
+                    Edition = x.Product.Edition,
+                    UnitPrice = (decimal)x.Product.UnitPrice,
                     ImageBase64 = $"data:image/{x.Product.ImageType};base64,{Convert.ToBase64String(x.Product.Image)}",
                 }).ToList();
 

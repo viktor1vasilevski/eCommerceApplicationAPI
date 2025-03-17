@@ -192,4 +192,15 @@ public class SqlGenericRepository<TEntity, TContext> : IGenericRepository<TEntit
     {
         dbSet.Update(entity);
     }
+
+    public async Task<TEntity> UpdateAsync(TEntity entity)
+    {
+        var entry = context.Entry(entity);
+        context.Entry(entity).State = EntityState.Detached;
+        context.Entry(entity).State = EntityState.Modified;
+
+        await context.SaveChangesAsync(); // Await here
+
+        return entity;
+    }
 }

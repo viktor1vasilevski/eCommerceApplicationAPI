@@ -32,6 +32,7 @@ public interface IGenericRepository<TEntity> where TEntity : class
     Task<TEntity> InsertAsync(TEntity entity);
     void InsertRange(IEnumerable<TEntity> entities);
     TEntity Update(TEntity entity);
+    Task<TEntity> UpdateAsync(TEntity entity);
     void UpdateWithRelatedEntities(TEntity entity);
     object SetObjectStateToDetached(Object obj);
     object SetObjectStateToAdded(object obj);
