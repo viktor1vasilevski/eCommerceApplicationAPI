@@ -93,9 +93,11 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
 
                 if (existingItem != null)
                 {
-                    // If the item exists, update its quantity
-                    existingItem.Quantity = newItem.Quantity;
-                    await _userBasketRepository.UpdateAsync(existingItem);
+                    if (existingItem.Quantity != newItem.Quantity)
+                    {
+                        existingItem.Quantity = newItem.Quantity;
+                        await _userBasketRepository.UpdateAsync(existingItem);
+                    }
                 }
                 else
                 {
