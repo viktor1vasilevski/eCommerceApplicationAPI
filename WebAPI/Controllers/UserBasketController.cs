@@ -1,5 +1,7 @@
 ﻿using Main.Interfaces;
 using Main.Requests.UserBasket;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -23,6 +25,15 @@ namespace WebAPI.Controllers
         {
             var response = await _userBasketService.GetBasketItemsByUserId(userId);
             return HandleResponse(response);
+        }
+
+        [HttpDelete("RemoveBasketItemsForUser/{userId}/{itemId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
+        public IActionResult Delete([FromRoute] Guid userId, Guid itemId)
+        {
+            var response = _userBasketService.RemoveBasketItemForUser(userId, itemId);
+            //return HandleResponse(response);
+            return Ok();
         }
 
     }

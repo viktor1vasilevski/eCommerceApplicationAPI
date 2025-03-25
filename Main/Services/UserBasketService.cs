@@ -1,4 +1,5 @@
-﻿using Data.Context;
+﻿using Azure.Core;
+using Data.Context;
 using EntityModels.Interfaces;
 using EntityModels.Models;
 using Main.Constants;
@@ -74,8 +75,8 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
         try
         {
             var userId = request.UserId;
-            var userExist = _userRepository.GetByID(userId);
-            if (userExist is null)
+            var user = _userRepository.GetByID(userId);
+            if (user is null)
                 return new ApiResponse<List<BasketItemResponseDTO>>
                 {
                     Success = false,
@@ -108,7 +109,7 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
                         UserId = userId,
                         ProductId = newItem.ProductId,
                         Quantity = newItem.Quantity,
-                        CreatedBy = userExist.FirstName + " " + userExist.LastName,
+                        CreatedBy = user.FirstName + " " + user.LastName,
                         Created = DateTime.UtcNow,
                     };
 
@@ -154,4 +155,39 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
         }
     }
 
+    public async Task<ApiResponse<BasketItemResponseDTO>> RemoveBasketItemForUser(Guid userId, Guid productId)
+    {
+        try
+        {
+            var userProduct = _userBasketRepository.Get(x => x.UserId == userId && x.ProductId == productId).FirstOrDefault();
+            if (userProduct is null)
+                return new ApiResponse<BasketItemResponseDTO>
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = UserBasketConstants.PRODUCT_NOT_FOUND
+                };
+
+            _userBasketRepository.Delete(userProduct);
+            _uow.SaveChanges();
+
+
+            return new ApiResponse<BasketItemResponseDTO>
+            {
+
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred in {FunctionName} at {Timestamp}. UserId: {UserId}, ProductId: {ProductId}", nameof(RemoveBasketItemForUser),
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), userId, productId);
+
+            return new ApiResponse<BasketItemResponseDTO>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = UserBasketConstants.ERROR_REMOVING_USER_BASKET_ITEM
+            };
+        }
+    }
 }

@@ -222,17 +222,9 @@ public class CategoryService(IUnitOfWork<AppDbContext> _uow, ILogger<CategorySer
     {
         try
         {
-            if (id == Guid.Empty)
-                return new ApiResponse<CategoryDetailsDTO>
-                {
-                    Success = false,
-                    NotificationType = NotificationType.BadRequest,
-                    Message = SharedConstants.INVALID_GUID
-                };
-
             var category = _categoryRepository.GetByID(id);
 
-            if (category == null)
+            if (category is null)
                 return new ApiResponse<CategoryDetailsDTO>
                 {
                     Success = false,
