@@ -32,8 +32,7 @@ namespace WebAPI.Controllers
         public IActionResult Delete([FromRoute] Guid userId, Guid itemId)
         {
             var response = _userBasketService.RemoveBasketItemForUser(userId, itemId);
-            //return HandleResponse(response);
-            return Ok();
+            return HandleResponse(response);
         }
 
     }

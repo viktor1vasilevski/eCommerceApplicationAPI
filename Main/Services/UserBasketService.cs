@@ -155,7 +155,7 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
         }
     }
 
-    public async Task<ApiResponse<BasketItemResponseDTO>> RemoveBasketItemForUser(Guid userId, Guid productId)
+    public ApiResponse<BasketItemResponseDTO> RemoveBasketItemForUser(Guid userId, Guid productId)
     {
         try
         {
@@ -169,12 +169,13 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
                 };
 
             _userBasketRepository.Delete(userProduct);
-            _uow.SaveChanges();
-
+             _uow.SaveChanges();
 
             return new ApiResponse<BasketItemResponseDTO>
             {
-
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Message = UserBasketConstants.SUCCESS_REMOVING_USER_BASKET_ITEM
             };
         }
         catch (Exception ex)

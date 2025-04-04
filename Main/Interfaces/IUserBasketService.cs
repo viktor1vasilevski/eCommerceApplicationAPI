@@ -8,5 +8,5 @@ public interface IUserBasketService
 {
     Task<ApiResponse<List<BasketItemResponseDTO>>> GetBasketItemsByUserId(Guid userId);
     Task<ApiResponse<List<BasketItemResponseDTO>>> ManageBasketItemsByUserId(AddToBasketRequest request);
-    Task<ApiResponse<BasketItemResponseDTO>> RemoveBasketItemForUser(Guid userId, Guid productId);
+    ApiResponse<BasketItemResponseDTO> RemoveBasketItemForUser(Guid userId, Guid productId);
 }
