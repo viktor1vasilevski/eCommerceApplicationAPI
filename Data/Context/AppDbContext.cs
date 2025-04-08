@@ -26,7 +26,7 @@ public class AppDbContext : DbContext, IDbContext
     public DbSet<Comment> Comments { get; set; }
     public DbSet<UserBasket> UserBaskets { get; set; }
 
-    public override int SaveChanges()
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
     {
         var entries = ChangeTracker
             .Entries()
@@ -52,11 +52,12 @@ public class AppDbContext : DbContext, IDbContext
                 ((AuditableBaseEntity)entityEntry.Entity).LastModified = DateTime.UtcNow;
                 ((AuditableBaseEntity)entityEntry.Entity).LastModifiedBy = "Admin";
             }
-
-
         }
-        return base.SaveChanges();
+
+        return await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
+    public override int SaveChanges() =>
+          SaveChangesAsync().GetAwaiter().GetResult();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
