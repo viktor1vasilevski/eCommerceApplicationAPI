@@ -13,6 +13,7 @@ namespace WebAPI.Controllers
         private readonly IUserBasketService _userBasketService = userBasketService;
 
         [HttpPost("MergeBasketItemsForUserId/{userId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
         public async Task<IActionResult> MergeBasketItemsForUserId([FromRoute] Guid userId, [FromBody] AddToBasketRequest request)
         {
             var response = await _userBasketService.MergeBasketItemsForUserId(userId, request);
@@ -21,6 +22,7 @@ namespace WebAPI.Controllers
 
 
         [HttpGet("GetBasketItemsByUserId/{userId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
         public async Task<IActionResult> GetBasketByUserId([FromRoute] Guid userId)
         {
             var response = await _userBasketService.GetBasketItemsByUserId(userId);
@@ -29,9 +31,9 @@ namespace WebAPI.Controllers
 
         [HttpDelete("RemoveBasketItemsForUser/{userId}/{itemId}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
-        public IActionResult Delete([FromRoute] Guid userId, Guid itemId)
+        public async Task<IActionResult> Delete([FromRoute] Guid userId, Guid itemId)
         {
-            var response = _userBasketService.RemoveBasketItemForUser(userId, itemId);
+            var response = await _userBasketService.RemoveBasketItemForUser(userId, itemId);
             return HandleResponse(response);
         }
 

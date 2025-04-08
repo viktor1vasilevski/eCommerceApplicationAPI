@@ -149,27 +149,41 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
         }
     }
 
-    public ApiResponse<BasketItemResponseDTO> RemoveBasketItemForUser(Guid userId, Guid productId)
+    public async Task<ApiResponse<List<BasketItemResponseDTO>>> RemoveBasketItemForUser(Guid userId, Guid productId)
     {
         try
         {
-            var userProduct = _userBasketRepository.Get(x => x.UserId == userId && x.ProductId == productId).FirstOrDefault();
-            if (userProduct is null)
-                return new ApiResponse<BasketItemResponseDTO>
+            var userBasketItems = await _userBasketRepository.GetAsync(x => x.UserId == userId && x.ProductId == productId);
+            if (!userBasketItems.Any())
+                return new ApiResponse<List<BasketItemResponseDTO>>
                 {
                     Success = false,
                     NotificationType = NotificationType.BadRequest,
                     Message = UserBasketConstants.PRODUCT_NOT_FOUND
                 };
 
-            _userBasketRepository.Delete(userProduct);
-             _uow.SaveChanges();
+            _userBasketRepository.Delete(userBasketItems.FirstOrDefault());
+            await _uow.SaveChangesAsync();
 
-            return new ApiResponse<BasketItemResponseDTO>
+            var userBasket = _userBasketRepository
+                .Get(x => x.UserId == userId, null, x => x.Include(x => x.Product))
+                .Select(x => new BasketItemResponseDTO
+                {
+                    Id = x.ProductId,
+                    Quantity = x.Quantity,
+                    Brand = x.Product.Brand,
+                    Name = x.Product.Name,
+                    Edition = x.Product.Edition,
+                    UnitPrice = (decimal)x.Product.UnitPrice,
+                    ImageBase64 = $"data:image/{x.Product.ImageType};base64,{Convert.ToBase64String(x.Product.Image)}",
+                }).ToList();
+
+            return new ApiResponse<List<BasketItemResponseDTO>>
             {
                 Success = true,
                 NotificationType = NotificationType.Success,
-                Message = UserBasketConstants.SUCCESS_REMOVING_USER_BASKET_ITEM
+                Message = UserBasketConstants.SUCCESS_REMOVING_USER_BASKET_ITEM,
+                Data = userBasket
             };
         }
         catch (Exception ex)
@@ -177,7 +191,7 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
             _logger.LogError(ex, "An error occurred in {FunctionName} at {Timestamp}. UserId: {UserId}, ProductId: {ProductId}", nameof(RemoveBasketItemForUser),
                 DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), userId, productId);
 
-            return new ApiResponse<BasketItemResponseDTO>
+            return new ApiResponse<List<BasketItemResponseDTO>>
             {
                 Success = false,
                 NotificationType = NotificationType.ServerError,
