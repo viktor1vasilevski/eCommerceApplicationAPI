@@ -70,11 +70,10 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
         }
     }
 
-    public async Task<ApiResponse<List<BasketItemResponseDTO>>> ManageBasketItemsByUserId(AddToBasketRequest request)
+    public async Task<ApiResponse<List<BasketItemResponseDTO>>> MergeBasketItemsForUserId(Guid userId, AddToBasketRequest request)
     {
         try
         {
-            var userId = request.UserId;
             var user = _userRepository.GetByID(userId);
             if (user is null)
                 return new ApiResponse<List<BasketItemResponseDTO>>
@@ -94,11 +93,8 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
 
                 if (existingItem != null)
                 {
-                    if (existingItem.Quantity != newItem.Quantity)
-                    {
-                        existingItem.Quantity = newItem.Quantity;
-                        await _userBasketRepository.UpdateAsync(existingItem);
-                    }
+                    existingItem.Quantity += newItem.Quantity;
+                    await _userBasketRepository.UpdateAsync(existingItem);
                 }
                 else
                 {
@@ -108,9 +104,7 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
                         Id = Guid.NewGuid(),
                         UserId = userId,
                         ProductId = newItem.ProductId,
-                        Quantity = newItem.Quantity,
-                        CreatedBy = user.FirstName + " " + user.LastName,
-                        Created = DateTime.UtcNow,
+                        Quantity = newItem.Quantity
                     };
 
                     await _userBasketRepository.InsertAsync(newBasketItem);
@@ -143,8 +137,8 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred in {FunctionName} at {Timestamp}. UserId: {UserId}", nameof(ManageBasketItemsByUserId),
-                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), request.UserId);
+            _logger.LogError(ex, "An error occurred in {FunctionName} at {Timestamp}. UserId: {UserId}", nameof(MergeBasketItemsForUserId),
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), userId);
 
             return new ApiResponse<List<BasketItemResponseDTO>>
             {
