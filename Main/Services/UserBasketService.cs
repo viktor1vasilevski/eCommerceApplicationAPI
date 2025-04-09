@@ -16,7 +16,82 @@ namespace Main.Services;
 public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryService> _logger) : IUserBasketService
 {
     private readonly IGenericRepository<UserBasket> _userBasketRepository = _uow.GetGenericRepository<UserBasket>();
+    private readonly IGenericRepository<Product> _productRepository = _uow.GetGenericRepository<Product>();
     private readonly IGenericRepository<User> _userRepository = _uow.GetGenericRepository<User>();
+
+    public async Task<ApiResponse<List<BasketItemResponseDTO>>> AddToBasket(Guid userId, Guid itemId)
+    {
+        try
+        {
+            var user = _userRepository.GetByID(userId);
+            var product = _productRepository.GetByID(itemId);
+
+            if (user is null || product is null)
+                return new ApiResponse<List<BasketItemResponseDTO>>
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = UserBasketConstants.ADD_TO_BASKET_VALIDATION_FAILED
+                };
+
+            var existingItems = _userBasketRepository.Get(x => x.UserId == userId, null, null).ToList();
+            var existingItem = existingItems.FirstOrDefault(x => x.ProductId == itemId);
+
+            if (existingItem != null)
+            {
+                existingItem.Quantity++;
+                await _userBasketRepository.UpdateAsync(existingItem);
+            }
+            else
+            {
+                // If the item does not exist, add it
+                var newBasketItem = new UserBasket
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    ProductId = itemId,
+                    Quantity = 1
+                };
+
+                await _userBasketRepository.InsertAsync(newBasketItem);
+            }
+
+            await _uow.SaveChangesAsync();
+
+            var updatedBasket = _userBasketRepository
+                .Get(x => x.UserId == userId, null, x => x.Include(x => x.Product))
+                .Select(x => new BasketItemResponseDTO
+                {
+                    Id = x.ProductId,
+                    Quantity = x.Quantity,
+                    Brand = x.Product.Brand,
+                    Name = x.Product.Name,
+                    Edition = x.Product.Edition,
+                    UnitPrice = (decimal)x.Product.UnitPrice,
+                    ImageBase64 = $"data:image/{x.Product.ImageType};base64,{Convert.ToBase64String(x.Product.Image)}",
+                }).ToList();
+
+            return new ApiResponse<List<BasketItemResponseDTO>>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Message = UserBasketConstants.SUCCESS_ADD_ITEM_TO_BASKET,
+                Data = updatedBasket
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred in {FunctionName} while getting adding items for user id at {Timestamp}. UserId: {UserId}, ItemId: {ItemId}",
+                nameof(AddToBasket), DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), userId, itemId);
+
+            return new ApiResponse<List<BasketItemResponseDTO>>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = UserBasketConstants.ERROR_ADD_ITEM_TO_BASKET
+            };
+        }
+    }
 
     public async Task<ApiResponse<List<BasketItemResponseDTO>>> GetBasketItemsByUserId(Guid userId)
     {

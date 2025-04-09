@@ -20,6 +20,14 @@ namespace WebAPI.Controllers
             return HandleResponse(response);
         }
 
+        [HttpPost("AddToBasket/{userId}/{itemId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
+        public async Task<IActionResult> AddToBasket([FromRoute] Guid userId, [FromRoute] Guid itemId)
+        {
+            var response = await _userBasketService.AddToBasket(userId, itemId);
+            return HandleResponse(response);
+        }
+
 
         [HttpGet("GetBasketItemsByUserId/{userId}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
@@ -31,7 +39,7 @@ namespace WebAPI.Controllers
 
         [HttpDelete("RemoveBasketItemsForUser/{userId}/{itemId}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
-        public async Task<IActionResult> Delete([FromRoute] Guid userId, Guid itemId)
+        public async Task<IActionResult> Delete([FromRoute] Guid userId, [FromRoute] Guid itemId)
         {
             var response = await _userBasketService.RemoveBasketItemForUser(userId, itemId);
             return HandleResponse(response);
