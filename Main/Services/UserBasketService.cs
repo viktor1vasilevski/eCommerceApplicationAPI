@@ -207,6 +207,7 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
             {
                 Success = true,
                 NotificationType = NotificationType.Success,
+                Message = UserBasketConstants.SUCCESS_ADD_ITEM_TO_BASKET,
                 Data = updatedBasket
             };
         }
