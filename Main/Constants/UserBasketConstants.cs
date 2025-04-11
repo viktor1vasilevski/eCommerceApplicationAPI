@@ -8,7 +8,7 @@ public static class UserBasketConstants
     public const string ERROR_ADD_ITEM_TO_BASKET = "Something went wrong while adding the item to your basket. Please try again later.";
 
     public const string SUCCESS_REMOVING_USER_BASKET_ITEM = "The item has been removed from your basket.";
-    public const string SUCCESS_ADD_ITEM_TO_BASKET = "Item added to your basket!";
+    public const string SUCCESS_BASKET_UPDATED = "Your basket has been updated.";
 
 
     public const string USER_NOT_EXIST = "User doesn't exist.";
