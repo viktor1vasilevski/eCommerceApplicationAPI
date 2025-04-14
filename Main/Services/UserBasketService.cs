@@ -200,4 +200,42 @@ public class UserBasketService(IUnitOfWork<AppDbContext> _uow, ILogger<CategoryS
             };
         }
     }
+
+    public async Task<ApiResponse<List<BasketItemResponseDTO>>> RemoveAllBasketItemsForUser(Guid userId)
+    {
+        try
+        {
+            var userBasketItems = await _userBasketRepository.GetAsync(x => x.UserId == userId);
+
+            if (!userBasketItems.Any())
+                return new ApiResponse<List<BasketItemResponseDTO>>
+                {
+                    Success = false,
+                    NotificationType = NotificationType.BadRequest,
+                    Message = UserBasketConstants.ERROR_EMPTY_BASKET_CHECKOUT
+                };
+
+            _userBasketRepository.DeleteRange(x => x.UserId == userId);
+            await _uow.SaveChangesAsync();
+
+            return new ApiResponse<List<BasketItemResponseDTO>>
+            {
+                Success = true,
+                NotificationType = NotificationType.Success,
+                Message = UserBasketConstants.SUCCESS_REMOVE_ALL_BASKET_ITEMS
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred in {FunctionName} at {Timestamp}. UserId: {UserId}", nameof(RemoveAllBasketItemsForUser),
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), userId);
+
+            return new ApiResponse<List<BasketItemResponseDTO>>
+            {
+                Success = false,
+                NotificationType = NotificationType.ServerError,
+                Message = UserBasketConstants.ERROR_REMOVING_ALL_USER_BASKET_ITEMS
+            };
+        }
+    }
 }

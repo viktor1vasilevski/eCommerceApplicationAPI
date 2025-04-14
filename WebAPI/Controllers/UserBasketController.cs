@@ -37,5 +37,13 @@ namespace WebAPI.Controllers
             return HandleResponse(response);
         }
 
+        [HttpDelete("RemoveAllBasketItemsForUser/{userId}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
+        public async Task<IActionResult> DeleteAll([FromRoute] Guid userId)
+        {
+            var response = await _userBasketService.RemoveAllBasketItemsForUser(userId);
+            return HandleResponse(response);
+        }
+
     }
 }
